@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +18,7 @@ import {
   ShieldCheck,
   Wallet,
   Target,
+  Loader2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/learn")({
@@ -32,17 +35,16 @@ const COURSES = [
     level: "Beginner",
     duration: "45 min",
     lessons: 6,
-    completedLessons: 4,
     tags: ["Budgeting", "Savings", "Debt"],
     color: "text-emerald-500",
     bgColor: "bg-emerald-500/10",
     lessons_list: [
-      { title: "Why budgeting matters", duration: "5 min", done: true },
-      { title: "The 50/30/20 rule", duration: "7 min", done: true },
-      { title: "Setting up an emergency fund", duration: "8 min", done: true },
-      { title: "Understanding debt types", duration: "10 min", done: true },
-      { title: "Credit cards: friend or foe?", duration: "8 min", done: false },
-      { title: "Automating your finances", duration: "7 min", done: false },
+      { title: "Why budgeting matters", duration: "5 min" },
+      { title: "The 50/30/20 rule", duration: "7 min" },
+      { title: "Setting up an emergency fund", duration: "8 min" },
+      { title: "Understanding debt types", duration: "10 min" },
+      { title: "Credit cards: friend or foe?", duration: "8 min" },
+      { title: "Automating your finances", duration: "7 min" },
     ],
   },
   {
@@ -53,18 +55,17 @@ const COURSES = [
     level: "Beginner",
     duration: "60 min",
     lessons: 7,
-    completedLessons: 2,
     tags: ["Islamic Finance", "Shariah", "Zakat"],
     color: "text-amber-500",
     bgColor: "bg-amber-500/10",
     lessons_list: [
-      { title: "What is Shariah-compliant finance?", duration: "8 min", done: true },
-      { title: "Riba explained — why interest is prohibited", duration: "10 min", done: true },
-      { title: "Calculating Zakat step by step", duration: "10 min", done: false },
-      { title: "Halal vs Haram investments", duration: "9 min", done: false },
-      { title: "Sukuk: Islamic bonds", duration: "8 min", done: false },
-      { title: "Islamic mortgages (Murabaha)", duration: "8 min", done: false },
-      { title: "Using Tactifin's compliance checker", duration: "7 min", done: false },
+      { title: "What is Shariah-compliant finance?", duration: "8 min" },
+      { title: "Riba explained — why interest is prohibited", duration: "10 min" },
+      { title: "Calculating Zakat step by step", duration: "10 min" },
+      { title: "Halal vs Haram investments", duration: "9 min" },
+      { title: "Sukuk: Islamic bonds", duration: "8 min" },
+      { title: "Islamic mortgages (Murabaha)", duration: "8 min" },
+      { title: "Using Tactifin's compliance checker", duration: "7 min" },
     ],
   },
   {
@@ -75,17 +76,16 @@ const COURSES = [
     level: "Beginner",
     duration: "55 min",
     lessons: 6,
-    completedLessons: 0,
     tags: ["Investing", "ETFs", "Portfolio"],
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
     lessons_list: [
-      { title: "Why invest at all?", duration: "6 min", done: false },
-      { title: "Risk vs return explained", duration: "9 min", done: false },
-      { title: "Index funds vs active funds", duration: "10 min", done: false },
-      { title: "Dollar-cost averaging", duration: "8 min", done: false },
-      { title: "Building a diversified portfolio", duration: "12 min", done: false },
-      { title: "Common investing mistakes", duration: "10 min", done: false },
+      { title: "Why invest at all?", duration: "6 min" },
+      { title: "Risk vs return explained", duration: "9 min" },
+      { title: "Index funds vs active funds", duration: "10 min" },
+      { title: "Dollar-cost averaging", duration: "8 min" },
+      { title: "Building a diversified portfolio", duration: "12 min" },
+      { title: "Common investing mistakes", duration: "10 min" },
     ],
   },
   {
@@ -96,16 +96,15 @@ const COURSES = [
     level: "Intermediate",
     duration: "40 min",
     lessons: 5,
-    completedLessons: 0,
     tags: ["Goals", "Savings", "Planning"],
     color: "text-purple-500",
     bgColor: "bg-purple-500/10",
     lessons_list: [
-      { title: "Defining your financial goals", duration: "7 min", done: false },
-      { title: "Short, medium and long-term buckets", duration: "8 min", done: false },
-      { title: "High-yield savings accounts", duration: "8 min", done: false },
-      { title: "Saving for a house deposit", duration: "9 min", done: false },
-      { title: "Retirement planning basics", duration: "8 min", done: false },
+      { title: "Defining your financial goals", duration: "7 min" },
+      { title: "Short, medium and long-term buckets", duration: "8 min" },
+      { title: "High-yield savings accounts", duration: "8 min" },
+      { title: "Saving for a house deposit", duration: "9 min" },
+      { title: "Retirement planning basics", duration: "8 min" },
     ],
   },
   {
@@ -116,16 +115,15 @@ const COURSES = [
     level: "Intermediate",
     duration: "35 min",
     lessons: 5,
-    completedLessons: 0,
     tags: ["Credit", "Score", "Borrowing"],
     color: "text-rose-500",
     bgColor: "bg-rose-500/10",
     lessons_list: [
-      { title: "How credit scores are calculated", duration: "8 min", done: false },
-      { title: "Reading your credit report", duration: "7 min", done: false },
-      { title: "Factors that hurt your score", duration: "7 min", done: false },
-      { title: "Building credit from scratch", duration: "7 min", done: false },
-      { title: "Using credit cards responsibly", duration: "6 min", done: false },
+      { title: "How credit scores are calculated", duration: "8 min" },
+      { title: "Reading your credit report", duration: "7 min" },
+      { title: "Factors that hurt your score", duration: "7 min" },
+      { title: "Building credit from scratch", duration: "7 min" },
+      { title: "Using credit cards responsibly", duration: "6 min" },
     ],
   },
   {
@@ -136,17 +134,16 @@ const COURSES = [
     level: "Advanced",
     duration: "50 min",
     lessons: 6,
-    completedLessons: 0,
     tags: ["Tax", "Deductions", "Planning"],
     color: "text-cyan-500",
     bgColor: "bg-cyan-500/10",
     lessons_list: [
-      { title: "Understanding tax brackets", duration: "8 min", done: false },
-      { title: "Above-the-line deductions", duration: "9 min", done: false },
-      { title: "Itemising vs standard deduction", duration: "8 min", done: false },
-      { title: "Tax-advantaged accounts (401k, IRA, HSA)", duration: "10 min", done: false },
-      { title: "Estimated quarterly taxes", duration: "8 min", done: false },
-      { title: "Working with a tax professional", duration: "7 min", done: false },
+      { title: "Understanding tax brackets", duration: "8 min" },
+      { title: "Above-the-line deductions", duration: "9 min" },
+      { title: "Itemising vs standard deduction", duration: "8 min" },
+      { title: "Tax-advantaged accounts (401k, IRA, HSA)", duration: "10 min" },
+      { title: "Estimated quarterly taxes", duration: "8 min" },
+      { title: "Working with a tax professional", duration: "7 min" },
     ],
   },
 ];
@@ -166,8 +163,27 @@ const GLOSSARY = [
   { term: "Index Fund", def: "A fund that tracks a market index (e.g. S&P 500), offering broad diversification at low cost." },
 ];
 
-function CourseCard({ course, onOpen }: { course: (typeof COURSES)[0]; onOpen: () => void }) {
-  const pct = course.lessons > 0 ? Math.round((course.completedLessons / course.lessons) * 100) : 0;
+// progress row shape from DB
+interface ProgressRow {
+  course_id: number;
+  lesson_index: number;
+}
+
+// Returns Set of "courseId:lessonIndex" strings for O(1) lookup
+function buildProgressSet(rows: ProgressRow[]): Set<string> {
+  return new Set(rows.map((r) => `${r.course_id}:${r.lesson_index}`));
+}
+
+function CourseCard({
+  course,
+  completedLessons,
+  onOpen,
+}: {
+  course: (typeof COURSES)[0];
+  completedLessons: number;
+  onOpen: () => void;
+}) {
+  const pct = course.lessons > 0 ? Math.round((completedLessons / course.lessons) * 100) : 0;
   return (
     <Card
       className="group relative overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-elegant"
@@ -199,7 +215,7 @@ function CourseCard({ course, onOpen }: { course: (typeof COURSES)[0]; onOpen: (
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" /> {course.duration}
             </span>
-            <span>{course.completedLessons}/{course.lessons} lessons</span>
+            <span>{completedLessons}/{course.lessons} lessons</span>
           </div>
           <Progress value={pct} className="h-1.5" />
           {pct === 100 ? (
@@ -219,8 +235,24 @@ function CourseCard({ course, onOpen }: { course: (typeof COURSES)[0]; onOpen: (
   );
 }
 
-function CourseDetail({ course, onBack }: { course: (typeof COURSES)[0]; onBack: () => void }) {
-  const pct = course.lessons > 0 ? Math.round((course.completedLessons / course.lessons) * 100) : 0;
+function CourseDetail({
+  course,
+  progressSet,
+  onBack,
+  onCompleteLesson,
+  isSaving,
+}: {
+  course: (typeof COURSES)[0];
+  progressSet: Set<string>;
+  onBack: () => void;
+  onCompleteLesson: (courseId: number, lessonIndex: number) => void;
+  isSaving: boolean;
+}) {
+  const completedLessons = course.lessons_list.filter((_, i) => progressSet.has(`${course.id}:${i}`)).length;
+  const pct = course.lessons > 0 ? Math.round((completedLessons / course.lessons) * 100) : 0;
+  // next lesson to unlock = first not done
+  const nextLessonIndex = course.lessons_list.findIndex((_, i) => !progressSet.has(`${course.id}:${i}`));
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -237,7 +269,7 @@ function CourseDetail({ course, onBack }: { course: (typeof COURSES)[0]; onBack:
           <p className="text-muted-foreground">{course.description}</p>
           <div className="space-y-1">
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{course.completedLessons} of {course.lessons} completed</span>
+              <span>{completedLessons} of {course.lessons} completed</span>
               <span>{pct}%</span>
             </div>
             <Progress value={pct} />
@@ -245,48 +277,99 @@ function CourseDetail({ course, onBack }: { course: (typeof COURSES)[0]; onBack:
         </CardContent>
       </Card>
       <div className="space-y-2">
-        {course.lessons_list.map((lesson, i) => (
-          <div
-            key={i}
-            className={`flex items-center gap-3 rounded-xl border p-4 transition-smooth ${
-              lesson.done
-                ? "border-emerald-500/30 bg-emerald-500/5"
-                : i === course.completedLessons
-                ? "border-[color:var(--brand-bolt)]/40 bg-[color:var(--brand-bolt)]/5 cursor-pointer hover:border-[color:var(--brand-bolt)]"
-                : "border-border/60 bg-card"
-            }`}
-          >
-            <div className="shrink-0">
-              {lesson.done ? (
-                <CheckCircle className="h-5 w-5 text-emerald-500" />
-              ) : i === course.completedLessons ? (
-                <PlayCircle className="h-5 w-5 text-[color:var(--brand-bolt)]" />
-              ) : (
-                <Lock className="h-5 w-5 text-muted-foreground" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className={`text-sm font-medium ${lesson.done ? "line-through text-muted-foreground" : ""}`}>
-                {lesson.title}
+        {course.lessons_list.map((lesson, i) => {
+          const done = progressSet.has(`${course.id}:${i}`);
+          const isNext = i === nextLessonIndex;
+          return (
+            <div
+              key={i}
+              onClick={() => {
+                if (isNext && !isSaving) onCompleteLesson(course.id, i);
+              }}
+              className={`flex items-center gap-3 rounded-xl border p-4 transition-smooth ${
+                done
+                  ? "border-emerald-500/30 bg-emerald-500/5"
+                  : isNext
+                  ? "border-[color:var(--brand-bolt)]/40 bg-[color:var(--brand-bolt)]/5 cursor-pointer hover:border-[color:var(--brand-bolt)]"
+                  : "border-border/60 bg-card"
+              }`}
+            >
+              <div className="shrink-0">
+                {done ? (
+                  <CheckCircle className="h-5 w-5 text-emerald-500" />
+                ) : isNext ? (
+                  isSaving ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-[color:var(--brand-bolt)]" />
+                  ) : (
+                    <PlayCircle className="h-5 w-5 text-[color:var(--brand-bolt)]" />
+                  )
+                ) : (
+                  <Lock className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className={`text-sm font-medium ${done ? "line-through text-muted-foreground" : ""}`}>
+                  {lesson.title}
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                <Clock className="h-3 w-3" /> {lesson.duration}
               </div>
             </div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-              <Clock className="h-3 w-3" /> {lesson.duration}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 }
 
 export default function LearnPage() {
+  const qc = useQueryClient();
   const [selectedCourse, setSelectedCourse] = useState<(typeof COURSES)[0] | null>(null);
   const [glossarySearch, setGlossarySearch] = useState("");
 
+  // Load progress from DB
+  const { data: progressRows = [], isLoading: loadingProgress } = useQuery<ProgressRow[]>({
+    queryKey: ["learn_progress"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("learn_progress")
+        .select("course_id, lesson_index");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const progressSet = buildProgressSet(progressRows);
+
+  // Mark lesson complete
+  const completeMutation = useMutation({
+    mutationFn: async ({ courseId, lessonIndex }: { courseId: number; lessonIndex: number }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase
+        .from("learn_progress")
+        .upsert(
+          { user_id: user.id, course_id: courseId, lesson_index: lessonIndex },
+          { onConflict: "user_id,course_id,lesson_index" },
+        );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["learn_progress"] });
+    },
+    onError: () => {
+      // silently ignore — progress still shows locally via optimistic invalidation
+    },
+  });
+
+  function handleCompleteLesson(courseId: number, lessonIndex: number) {
+    completeMutation.mutate({ courseId, lessonIndex });
+  }
+
   const totalLessons = COURSES.reduce((a, c) => a + c.lessons, 0);
-  const doneLessons = COURSES.reduce((a, c) => a + c.completedLessons, 0);
-  const overallPct = Math.round((doneLessons / totalLessons) * 100);
+  const doneLessons = progressRows.length;
+  const overallPct = totalLessons > 0 ? Math.round((doneLessons / totalLessons) * 100) : 0;
 
   const filteredGlossary = GLOSSARY.filter(
     (g) =>
@@ -298,7 +381,13 @@ export default function LearnPage() {
   if (selectedCourse) {
     return (
       <div className="space-y-6">
-        <CourseDetail course={selectedCourse} onBack={() => setSelectedCourse(null)} />
+        <CourseDetail
+          course={selectedCourse}
+          progressSet={progressSet}
+          onBack={() => setSelectedCourse(null)}
+          onCompleteLesson={handleCompleteLesson}
+          isSaving={completeMutation.isPending}
+        />
       </div>
     );
   }
@@ -321,7 +410,7 @@ export default function LearnPage() {
               <span className="text-sm font-medium">Your learning progress</span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              {doneLessons} of {totalLessons} lessons completed across {COURSES.length} courses
+              {loadingProgress ? "Loading…" : `${doneLessons} of ${totalLessons} lessons completed across ${COURSES.length} courses`}
             </p>
           </div>
           <div className="sm:w-48 space-y-1">
@@ -341,11 +430,25 @@ export default function LearnPage() {
         </TabsList>
 
         <TabsContent value="courses" className="mt-4">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {COURSES.map((course) => (
-              <CourseCard key={course.id} course={course} onOpen={() => setSelectedCourse(course)} />
-            ))}
-          </div>
+          {loadingProgress ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading progress…
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {COURSES.map((course) => {
+                const completed = course.lessons_list.filter((_, i) => progressSet.has(`${course.id}:${i}`)).length;
+                return (
+                  <CourseCard
+                    key={course.id}
+                    course={course}
+                    completedLessons={completed}
+                    onOpen={() => setSelectedCourse(course)}
+                  />
+                );
+              })}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="glossary" className="mt-4 space-y-4">

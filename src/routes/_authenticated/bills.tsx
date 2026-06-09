@@ -1,11 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   Zap,
@@ -19,6 +22,7 @@ import {
   CheckCircle,
   AlertCircle,
   Clock,
+  Loader2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/bills")({
@@ -27,16 +31,20 @@ export const Route = createFileRoute("/_authenticated/bills")({
 });
 
 type BillStatus = "upcoming" | "due-today" | "overdue" | "paid";
+type PaymentMethod = "bkash" | "cash_on_delivery" | "other";
 
-interface Bill {
+interface BillRow {
   id: string;
+  user_id: string;
   name: string;
   amount: number;
-  dueDate: string;
+  due_date: string;
   category: string;
-  recurring: "monthly" | "quarterly" | "annually" | "one-time";
-  status: BillStatus;
+  recurring: string;
+  paid: boolean;
   autopay: boolean;
+  payment_method: string | null;
+  created_at: string;
 }
 
 const BILL_CATEGORIES = [
@@ -51,6 +59,12 @@ const BILL_CATEGORIES = [
 
 const RECURRINGS = ["monthly", "quarterly", "annually", "one-time"] as const;
 
+const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
+  { value: "bkash", label: "bKash" },
+  { value: "cash_on_delivery", label: "Cash on Delivery" },
+  { value: "other", label: "Other" },
+];
+
 const today = new Date().toISOString().slice(0, 10);
 
 function getStatus(dueDate: string, paid: boolean): BillStatus {
@@ -60,19 +74,17 @@ function getStatus(dueDate: string, paid: boolean): BillStatus {
   return "upcoming";
 }
 
-const DEMO_BILLS: Bill[] = [
-  { id: "1", name: "Electricity", amount: 85.5, dueDate: today, category: "Electricity", recurring: "monthly", status: "due-today", autopay: true },
-  { id: "2", name: "Internet", amount: 59.99, dueDate: "2026-06-15", category: "Internet", recurring: "monthly", status: "upcoming", autopay: false },
-  { id: "3", name: "Rent", amount: 1200, dueDate: "2026-06-01", category: "Rent / Mortgage", recurring: "monthly", status: "overdue", autopay: false },
-  { id: "4", name: "Phone", amount: 45, dueDate: "2026-06-20", category: "Phone", recurring: "monthly", status: "upcoming", autopay: true },
-  { id: "5", name: "Water", amount: 32.0, dueDate: "2026-05-28", category: "Water", recurring: "monthly", status: "paid", autopay: false },
-];
-
 const STATUS_CONFIG: Record<BillStatus, { label: string; color: string; icon: React.ElementType }> = {
   "due-today": { label: "Due today", color: "text-amber-500 bg-amber-500/10 border-amber-500/30", icon: AlertCircle },
   overdue: { label: "Overdue", color: "text-rose-500 bg-rose-500/10 border-rose-500/30", icon: AlertCircle },
   upcoming: { label: "Upcoming", color: "text-muted-foreground bg-muted border-border", icon: Clock },
   paid: { label: "Paid", color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/30", icon: CheckCircle },
+};
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  bkash: "bKash",
+  cash_on_delivery: "Cash on Delivery",
+  other: "Other",
 };
 
 function getCategoryIcon(category: string) {
@@ -84,53 +96,121 @@ function fmt(n: number) {
 }
 
 export default function BillsPage() {
-  const [bills, setBills] = useState<Bill[]>(DEMO_BILLS);
+  const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [filterStatus, setFilterStatus] = useState<BillStatus | "all">("all");
 
-  // form state
+  // Pay dialog state
+  const [payingBillId, setPayingBillId] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bkash");
+
+  // Form state
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [dueDate, setDueDate] = useState(today);
   const [category, setCategory] = useState("Electricity");
-  const [recurring, setRecurring] = useState<Bill["recurring"]>("monthly");
+  const [recurring, setRecurring] = useState<string>("monthly");
   const [autopay, setAutopay] = useState(false);
 
-  function addBill(e: React.FormEvent) {
+  // Fetch bills
+  const { data: bills = [], isLoading } = useQuery<BillRow[]>({
+    queryKey: ["bills"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bills")
+        .select("*")
+        .order("due_date", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Add bill
+  const addMutation = useMutation({
+    mutationFn: async (bill: Omit<BillRow, "id" | "created_at">) => {
+      const { error } = await supabase.from("bills").insert(bill);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bills"] });
+      setName(""); setAmount(""); setDueDate(today); setCategory("Electricity");
+      setRecurring("monthly"); setAutopay(false);
+      setShowForm(false);
+      toast.success("Bill added");
+    },
+    onError: () => toast.error("Failed to add bill"),
+  });
+
+  // Mark paid
+  const markPaidMutation = useMutation({
+    mutationFn: async ({ id, method }: { id: string; method: PaymentMethod }) => {
+      const { error } = await supabase
+        .from("bills")
+        .update({ paid: true, payment_method: method })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bills"] });
+      setPayingBillId(null);
+      toast.success("Marked as paid");
+    },
+    onError: () => toast.error("Failed to update bill"),
+  });
+
+  // Delete bill
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("bills").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bills"] });
+      toast.success("Bill removed");
+    },
+    onError: () => toast.error("Failed to delete bill"),
+  });
+
+  async function addBill(e: React.FormEvent) {
     e.preventDefault();
     if (!name || !amount || !dueDate) return;
-    const bill: Bill = {
-      id: Date.now().toString(),
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    addMutation.mutate({
+      user_id: user.id,
       name,
       amount: Number(amount),
-      dueDate,
+      due_date: dueDate,
       category,
       recurring,
-      status: getStatus(dueDate, false),
+      paid: false,
       autopay,
-    };
-    setBills((prev) => [bill, ...prev]);
-    setName(""); setAmount(""); setDueDate(today); setCategory("Electricity"); setRecurring("monthly"); setAutopay(false);
-    setShowForm(false);
-    toast.success("Bill added");
+      payment_method: null,
+    });
   }
 
-  function markPaid(id: string) {
-    setBills((prev) => prev.map((b) => (b.id === id ? { ...b, status: "paid" as BillStatus } : b)));
-    toast.success("Marked as paid");
+  function openPayDialog(id: string) {
+    setPayingBillId(id);
+    setPaymentMethod("bkash");
   }
 
-  function deleteBill(id: string) {
-    setBills((prev) => prev.filter((b) => b.id !== id));
-    toast.success("Bill removed");
+  function confirmPay() {
+    if (!payingBillId) return;
+    markPaidMutation.mutate({ id: payingBillId, method: paymentMethod });
   }
 
-  const filtered = bills.filter((b) => filterStatus === "all" || b.status === filterStatus);
+  // Derive status from DB fields
+  const billsWithStatus = bills.map((b) => ({
+    ...b,
+    status: getStatus(b.due_date, b.paid),
+  }));
 
-  const totalDue = bills.filter((b) => b.status !== "paid").reduce((a, b) => a + b.amount, 0);
-  const overdue = bills.filter((b) => b.status === "overdue");
-  const dueToday = bills.filter((b) => b.status === "due-today");
-  const autopayCount = bills.filter((b) => b.autopay && b.status !== "paid").length;
+  const filtered = billsWithStatus.filter((b) => filterStatus === "all" || b.status === filterStatus);
+
+  const totalDue = billsWithStatus.filter((b) => b.status !== "paid").reduce((a, b) => a + Number(b.amount), 0);
+  const overdue = billsWithStatus.filter((b) => b.status === "overdue");
+  const dueToday = billsWithStatus.filter((b) => b.status === "due-today");
+  const autopayCount = billsWithStatus.filter((b) => b.autopay && b.status !== "paid").length;
 
   return (
     <div className="space-y-6">
@@ -213,7 +293,7 @@ export default function BillsPage() {
               </div>
               <div>
                 <Label>Recurring</Label>
-                <Select value={recurring} onValueChange={(v) => setRecurring(v as Bill["recurring"])}>
+                <Select value={recurring} onValueChange={setRecurring}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {RECURRINGS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
@@ -233,7 +313,10 @@ export default function BillsPage() {
                 </div>
               </div>
               <div className="md:col-span-3 flex gap-2">
-                <Button type="submit">Save bill</Button>
+                <Button type="submit" disabled={addMutation.isPending}>
+                  {addMutation.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+                  Save bill
+                </Button>
                 <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
               </div>
             </form>
@@ -257,57 +340,112 @@ export default function BillsPage() {
       </div>
 
       {/* Bills list */}
-      <div className="space-y-3">
-        {filtered.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No bills match this filter.</p>
-        ) : (
-          filtered.map((bill) => {
-            const Icon = getCategoryIcon(bill.category);
-            const statusCfg = STATUS_CONFIG[bill.status];
-            const StatusIcon = statusCfg.icon;
-            return (
-              <Card key={bill.id} className="group">
-                <CardContent className="flex items-center justify-between gap-4 pt-4 pb-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-10 w-10 shrink-0 rounded-xl border border-border/60 bg-[color:var(--surface-elevated)] flex items-center justify-center">
-                      <Icon className="h-4 w-4 text-[color:var(--brand-bolt)]" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium">{bill.name}</span>
-                        <Badge variant="outline" className={`text-[10px] border ${statusCfg.color}`}>
-                          <StatusIcon className="mr-1 h-2.5 w-2.5" />
-                          {statusCfg.label}
-                        </Badge>
-                        {bill.autopay && (
-                          <Badge variant="secondary" className="text-[10px]">Autopay</Badge>
-                        )}
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading bills…
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {bills.length === 0 ? "No bills yet. Add one to get started." : "No bills match this filter."}
+            </p>
+          ) : (
+            filtered.map((bill) => {
+              const Icon = getCategoryIcon(bill.category);
+              const statusCfg = STATUS_CONFIG[bill.status];
+              const StatusIcon = statusCfg.icon;
+              return (
+                <Card key={bill.id} className="group">
+                  <CardContent className="flex items-center justify-between gap-4 pt-4 pb-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-10 w-10 shrink-0 rounded-xl border border-border/60 bg-[color:var(--surface-elevated)] flex items-center justify-center">
+                        <Icon className="h-4 w-4 text-[color:var(--brand-bolt)]" />
                       </div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        {bill.category} · {bill.recurring} · Due {bill.dueDate}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium">{bill.name}</span>
+                          <Badge variant="outline" className={`text-[10px] border ${statusCfg.color}`}>
+                            <StatusIcon className="mr-1 h-2.5 w-2.5" />
+                            {statusCfg.label}
+                          </Badge>
+                          {bill.autopay && (
+                            <Badge variant="secondary" className="text-[10px]">Autopay</Badge>
+                          )}
+                          {bill.payment_method && bill.paid && (
+                            <Badge variant="secondary" className="text-[10px]">
+                              {PAYMENT_METHOD_LABELS[bill.payment_method] ?? bill.payment_method}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {bill.category} · {bill.recurring} · Due {bill.due_date}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-lg font-semibold">{fmt(bill.amount)}</span>
-                    {bill.status !== "paid" && (
-                      <Button size="sm" variant="outline" onClick={() => markPaid(bill.id)}>
-                        <CheckCircle className="mr-1 h-3.5 w-3.5 text-emerald-500" /> Mark paid
-                      </Button>
-                    )}
-                    <button
-                      onClick={() => deleteBill(bill.id)}
-                      className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        )}
-      </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-lg font-semibold">{fmt(Number(bill.amount))}</span>
+                      {bill.status !== "paid" && (
+                        <Button size="sm" variant="outline" onClick={() => openPayDialog(bill.id)}>
+                          <CheckCircle className="mr-1 h-3.5 w-3.5 text-emerald-500" /> Mark paid
+                        </Button>
+                      )}
+                      <button
+                        onClick={() => deleteMutation.mutate(bill.id)}
+                        disabled={deleteMutation.isPending}
+                        className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* Pay dialog — select payment method */}
+      <Dialog open={!!payingBillId} onOpenChange={(open) => { if (!open) setPayingBillId(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Select payment method</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="grid gap-2">
+              {PAYMENT_METHODS.map((pm) => (
+                <button
+                  key={pm.value}
+                  type="button"
+                  onClick={() => setPaymentMethod(pm.value)}
+                  className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm transition-colors ${
+                    paymentMethod === pm.value
+                      ? "border-[color:var(--brand-bolt)] bg-[color:var(--brand-bolt)]/10 text-foreground"
+                      : "border-border bg-card text-muted-foreground hover:border-border/80 hover:text-foreground"
+                  }`}
+                >
+                  <div className={`h-3.5 w-3.5 rounded-full border-2 shrink-0 ${
+                    paymentMethod === pm.value ? "border-[color:var(--brand-bolt)] bg-[color:var(--brand-bolt)]" : "border-muted-foreground"
+                  }`} />
+                  {pm.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                className="flex-1"
+                onClick={confirmPay}
+                disabled={markPaidMutation.isPending}
+              >
+                {markPaidMutation.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+                Confirm payment
+              </Button>
+              <Button variant="outline" onClick={() => setPayingBillId(null)}>Cancel</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

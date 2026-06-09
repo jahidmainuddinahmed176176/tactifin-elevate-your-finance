@@ -73,6 +73,93 @@ export type Database = {
         }
         Relationships: []
       }
+      bills: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          amount: number
+          due_date: string
+          category: string
+          recurring: string
+          paid: boolean
+          autopay: boolean
+          payment_method: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          amount: number
+          due_date: string
+          category: string
+          recurring: string
+          paid?: boolean
+          autopay?: boolean
+          payment_method?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          amount?: number
+          due_date?: string
+          category?: string
+          recurring?: string
+          paid?: boolean
+          autopay?: boolean
+          payment_method?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      learn_progress: {
+        Row: {
+          id: string
+          user_id: string
+          course_id: number
+          lesson_index: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          course_id: number
+          lesson_index: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          course_id?: number
+          lesson_index?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
+      newsletter_subscribers: {
+        Row: {
+          id: string
+          email: string
+          user_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          user_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          user_id?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       budgets: {
         Row: {
           category: string
@@ -202,6 +289,8 @@ export type Database = {
     }
     Enums: {
       txn_type: "income" | "expense"
+      bill_recurring: "monthly" | "quarterly" | "annually" | "one-time"
+      payment_method: "bkash" | "cash_on_delivery" | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -330,6 +419,8 @@ export const Constants = {
   public: {
     Enums: {
       txn_type: ["income", "expense"],
+      bill_recurring: ["monthly", "quarterly", "annually", "one-time"],
+      payment_method: ["bkash", "cash_on_delivery", "other"],
     },
   },
 } as const

@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Search, TrendingUp, BookOpen, AlertCircle, DollarSign } from "lucide-react";
+import { toast } from "sonner";
+import { Search, TrendingUp, BookOpen, AlertCircle, DollarSign, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/news")({
   head: () => ({ meta: [{ title: "Financial Tips & News — Tactifin" }] }),
@@ -134,6 +137,35 @@ const NEWS = [
 export default function NewsPage() {
   const [activeCategory, setActiveCategory] = useState<Category>("All");
   const [search, setSearch] = useState("");
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+
+  const subscribeMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("newsletter_subscribers")
+        .upsert(
+          { email, user_id: user?.id ?? null },
+          { onConflict: "email" },
+        );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Subscribed successfully");
+      setNewsletterEmail("");
+    },
+    onError: () => toast.error("Could not subscribe. Please try again."),
+  });
+
+  function handleSubscribe(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = newsletterEmail.trim();
+    if (!trimmed || !trimmed.includes("@")) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+    subscribeMutation.mutate(trimmed);
+  }
 
   const allItems = [...TIPS.map((t) => ({ ...t, type: "tip" as const })), ...NEWS.map((n) => ({ ...n, type: "news" as const }))];
 
@@ -232,12 +264,21 @@ export default function NewsPage() {
               Get curated tips, market updates and Islamic finance insights delivered weekly.
             </p>
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Input placeholder="your@email.com" className="text-sm" />
-            <Button size="sm" className="shrink-0">
-              <ExternalLink className="mr-1.5 h-3.5 w-3.5" /> Subscribe
+          <form onSubmit={handleSubscribe} className="flex items-center gap-2 w-full sm:w-auto">
+            <Input
+              type="email"
+              placeholder="your@email.com"
+              className="text-sm"
+              value={newsletterEmail}
+              onChange={(e) => setNewsletterEmail(e.target.value)}
+              disabled={subscribeMutation.isPending}
+            />
+            <Button type="submit" size="sm" className="shrink-0" disabled={subscribeMutation.isPending}>
+              {subscribeMutation.isPending
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : "Subscribe"}
             </Button>
-          </div>
+          </form>
         </CardContent>
       </Card>
     </div>
