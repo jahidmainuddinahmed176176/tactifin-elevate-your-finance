@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/components/site/theme-provider";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { TactifinLogo } from "@/components/site/tactifin-logo";
 
 const NAV = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
@@ -60,7 +61,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         )}
       >
         <div className="flex h-16 items-center gap-2 border-b border-border px-5">
-          <div className="h-8 w-8 rounded-full bg-brand-gradient" />
+          <TactifinLogo size={32} />
           <span className="text-lg font-medium tracking-tight">Tactifin</span>
         </div>
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">

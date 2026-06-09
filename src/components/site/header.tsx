@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Menu, Moon, Sun, X } from "lucide-react";
 import { useTheme } from "./theme-provider";
 import { Button } from "@/components/ui/button";
+import { TactifinLogo } from "./tactifin-logo";
 
 const NAV = [
   { label: "Platform", href: "#platform" },
@@ -20,7 +21,7 @@ export function SiteHeader() {
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/70 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-full bg-brand-gradient shrink-0" />
+          <TactifinLogo size={36} />
           <span className="text-lg font-medium tracking-tight">Tactifin</span>
         </Link>
 

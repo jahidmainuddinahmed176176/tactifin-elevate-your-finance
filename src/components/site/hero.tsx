@@ -1,5 +1,6 @@
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TactifinLogo } from "@/components/site/tactifin-logo";
 
 export function Hero() {
   return (
@@ -51,7 +52,7 @@ export function Hero() {
               </div>
               <div className="mt-6 flex items-center justify-between rounded-xl border border-border/60 bg-card p-5">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-brand-gradient shrink-0" />
+                  <TactifinLogo size={40} />
                   <div>
                     <div className="text-sm">AI Categorization</div>
                     <div className="text-xs text-muted-foreground">14 transactions auto-sorted · 0 review needed</div>

@@ -1,3 +1,5 @@
+import { TactifinLogo } from "./tactifin-logo";
+
 export function SiteFooter() {
   return (
     <footer className="relative border-t border-border/40 bg-[color:var(--surface-sunken)] py-16">
@@ -7,7 +9,7 @@ export function SiteFooter() {
         <div className="grid gap-10 md:grid-cols-4">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-full bg-brand-gradient shrink-0" />
+              <TactifinLogo size={36} />
               <span className="text-lg font-medium">Tactifin</span>
             </div>
             <p className="mt-4 max-w-sm text-sm text-muted-foreground">
