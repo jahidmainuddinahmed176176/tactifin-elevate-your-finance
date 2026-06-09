@@ -37,6 +37,6 @@ npm run dev
 ```
 
 ## Links
-- **Live Site:** [https://tactifin-elevate-your-finance-91t8xr12f.vercel.app](https://tactifin-elevate-your-finance-l0uck99wp.vercel.app/)
+- **Live Site:** https://tactifin-elevate-your-finance.vercel.app/
 - **Supabase Project:** aurdpgnwxttxduozadtq
 ```
