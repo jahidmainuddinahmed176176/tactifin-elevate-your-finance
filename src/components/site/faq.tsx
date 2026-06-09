@@ -3,6 +3,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 const FAQS = [
   { q: "What is Tactifin?", a: "Tactifin is an AI-native accounting platform that unifies tracking, budgeting, lending, assets and Shariah-aware finance into a single, premium experience." },
   { q: "How does Shariah-based finance work?", a: "Our Islamic Compliance Checker monitors interest exposure, runs Halal/Haram detection, and sends Zakat alerts — with ML-generated compliance reports you can share." },
+  { q: "What is the Rewinder feature?", a: "Rewinder automatically replays your financial history month by month. It surfaces spending trends, income vs expense charts, and category breakdowns so you can spot patterns and make smarter decisions going forward." },
+  { q: "How does Bill Pay work?", a: "Add your recurring bills (electricity, rent, internet, etc.) and Tactifin tracks due dates, sends reminders, and lets you mark bills as paid or enable autopay. You'll always know exactly what's due and when." },
   { q: "Is my bank data secure?", a: "Bank and mobile wallet integrations use read-only connections. Fraud detection runs continuously, flagging anomalies before they become losses." },
   { q: "When can I use Tactifin?", a: "Tactifin is currently in private beta. Join the waitlist for early access and partner program updates." },
 ];

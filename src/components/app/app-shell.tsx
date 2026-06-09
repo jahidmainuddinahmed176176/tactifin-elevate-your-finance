@@ -12,6 +12,10 @@ import {
   Sun,
   Menu,
   X,
+  CreditCard,
+  RotateCcw,
+  Newspaper,
+  BookOpen,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,9 +28,13 @@ const NAV = [
   { to: "/transactions", label: "Transactions", icon: Receipt },
   { to: "/goals", label: "Goals", icon: Target },
   { to: "/budgets", label: "Budgets", icon: Wallet },
+  { to: "/bills", label: "Bill Pay", icon: CreditCard },
+  { to: "/rewinder", label: "Rewinder", icon: RotateCcw },
   { to: "/calculators", label: "Calculators", icon: Calculator },
   { to: "/compliance", label: "Compliance", icon: ShieldCheck },
   { to: "/chat", label: "AI Assistant", icon: Bot },
+  { to: "/news", label: "Tips & News", icon: Newspaper },
+  { to: "/learn", label: "Learning", icon: BookOpen },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -55,7 +63,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="h-8 w-8 rounded-full bg-brand-gradient" />
           <span className="text-lg font-medium tracking-tight">Tactifin</span>
         </div>
-        <nav className="flex-1 space-y-1 p-3">
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
           {NAV.map((n) => {
             const active = path === n.to || (n.to !== "/app" && path.startsWith(n.to));
             return (

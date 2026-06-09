@@ -26,9 +26,9 @@ export function SiteFooter() {
           <div>
             <div className="text-xs uppercase tracking-wider text-muted-foreground">Resources</div>
             <ul className="mt-4 space-y-2 text-sm">
-              <li><a href="#" className="text-foreground/80 hover:text-foreground">Financial Tips & News</a></li>
-              <li><a href="#" className="text-foreground/80 hover:text-foreground">Learning Resources</a></li>
-              <li><a href="#" className="text-foreground/80 hover:text-foreground">Beta Program</a></li>
+              <li><a href="/news" className="text-foreground/80 hover:text-foreground">Financial Tips &amp; News</a></li>
+              <li><a href="/learn" className="text-foreground/80 hover:text-foreground">Learning Resources</a></li>
+              <li><a href="#faq" className="text-foreground/80 hover:text-foreground">Beta Program</a></li>
             </ul>
           </div>
         </div>

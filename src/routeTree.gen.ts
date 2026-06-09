@@ -13,11 +13,15 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
+import { Route as AuthenticatedRewinderRouteImport } from './routes/_authenticated/rewinder'
+import { Route as AuthenticatedNewsRouteImport } from './routes/_authenticated/news'
+import { Route as AuthenticatedLearnRouteImport } from './routes/_authenticated/learn'
 import { Route as AuthenticatedGoalsRouteImport } from './routes/_authenticated/goals'
 import { Route as AuthenticatedComplianceRouteImport } from './routes/_authenticated/compliance'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedCalculatorsRouteImport } from './routes/_authenticated/calculators'
 import { Route as AuthenticatedBudgetsRouteImport } from './routes/_authenticated/budgets'
+import { Route as AuthenticatedBillsRouteImport } from './routes/_authenticated/bills'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
@@ -42,6 +46,21 @@ const AuthenticatedTransactionsRoute =
     path: '/transactions',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedRewinderRoute = AuthenticatedRewinderRouteImport.update({
+  id: '/rewinder',
+  path: '/rewinder',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedNewsRoute = AuthenticatedNewsRouteImport.update({
+  id: '/news',
+  path: '/news',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLearnRoute = AuthenticatedLearnRouteImport.update({
+  id: '/learn',
+  path: '/learn',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedGoalsRoute = AuthenticatedGoalsRouteImport.update({
   id: '/goals',
   path: '/goals',
@@ -68,6 +87,11 @@ const AuthenticatedBudgetsRoute = AuthenticatedBudgetsRouteImport.update({
   path: '/budgets',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBillsRoute = AuthenticatedBillsRouteImport.update({
+  id: '/bills',
+  path: '/bills',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -89,11 +113,15 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app': typeof AuthenticatedAppRoute
+  '/bills': typeof AuthenticatedBillsRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
   '/calculators': typeof AuthenticatedCalculatorsRoute
   '/chat': typeof AuthenticatedChatRouteWithChildren
   '/compliance': typeof AuthenticatedComplianceRoute
   '/goals': typeof AuthenticatedGoalsRoute
+  '/learn': typeof AuthenticatedLearnRoute
+  '/news': typeof AuthenticatedNewsRoute
+  '/rewinder': typeof AuthenticatedRewinderRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
@@ -102,10 +130,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app': typeof AuthenticatedAppRoute
+  '/bills': typeof AuthenticatedBillsRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
   '/calculators': typeof AuthenticatedCalculatorsRoute
   '/compliance': typeof AuthenticatedComplianceRoute
   '/goals': typeof AuthenticatedGoalsRoute
+  '/learn': typeof AuthenticatedLearnRoute
+  '/news': typeof AuthenticatedNewsRoute
+  '/rewinder': typeof AuthenticatedRewinderRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/chat': typeof AuthenticatedChatIndexRoute
@@ -116,11 +148,15 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
+  '/_authenticated/bills': typeof AuthenticatedBillsRoute
   '/_authenticated/budgets': typeof AuthenticatedBudgetsRoute
   '/_authenticated/calculators': typeof AuthenticatedCalculatorsRoute
   '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
   '/_authenticated/compliance': typeof AuthenticatedComplianceRoute
   '/_authenticated/goals': typeof AuthenticatedGoalsRoute
+  '/_authenticated/learn': typeof AuthenticatedLearnRoute
+  '/_authenticated/news': typeof AuthenticatedNewsRoute
+  '/_authenticated/rewinder': typeof AuthenticatedRewinderRoute
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
@@ -131,11 +167,15 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app'
+    | '/bills'
     | '/budgets'
     | '/calculators'
     | '/chat'
     | '/compliance'
     | '/goals'
+    | '/learn'
+    | '/news'
+    | '/rewinder'
     | '/transactions'
     | '/chat/$threadId'
     | '/chat/'
@@ -144,10 +184,14 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app'
+    | '/bills'
     | '/budgets'
     | '/calculators'
     | '/compliance'
     | '/goals'
+    | '/learn'
+    | '/news'
+    | '/rewinder'
     | '/transactions'
     | '/chat/$threadId'
     | '/chat'
@@ -157,11 +201,15 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/app'
+    | '/_authenticated/bills'
     | '/_authenticated/budgets'
     | '/_authenticated/calculators'
     | '/_authenticated/chat'
     | '/_authenticated/compliance'
     | '/_authenticated/goals'
+    | '/_authenticated/learn'
+    | '/_authenticated/news'
+    | '/_authenticated/rewinder'
     | '/_authenticated/transactions'
     | '/_authenticated/chat/$threadId'
     | '/_authenticated/chat/'
@@ -203,6 +251,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransactionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/rewinder': {
+      id: '/_authenticated/rewinder'
+      path: '/rewinder'
+      fullPath: '/rewinder'
+      preLoaderRoute: typeof AuthenticatedRewinderRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/news': {
+      id: '/_authenticated/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof AuthenticatedNewsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/learn': {
+      id: '/_authenticated/learn'
+      path: '/learn'
+      fullPath: '/learn'
+      preLoaderRoute: typeof AuthenticatedLearnRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/goals': {
       id: '/_authenticated/goals'
       path: '/goals'
@@ -236,6 +305,13 @@ declare module '@tanstack/react-router' {
       path: '/budgets'
       fullPath: '/budgets'
       preLoaderRoute: typeof AuthenticatedBudgetsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bills': {
+      id: '/_authenticated/bills'
+      path: '/bills'
+      fullPath: '/bills'
+      preLoaderRoute: typeof AuthenticatedBillsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/app': {
@@ -277,21 +353,29 @@ const AuthenticatedChatRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
+  AuthenticatedBillsRoute: typeof AuthenticatedBillsRoute
   AuthenticatedBudgetsRoute: typeof AuthenticatedBudgetsRoute
   AuthenticatedCalculatorsRoute: typeof AuthenticatedCalculatorsRoute
   AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
   AuthenticatedComplianceRoute: typeof AuthenticatedComplianceRoute
   AuthenticatedGoalsRoute: typeof AuthenticatedGoalsRoute
+  AuthenticatedLearnRoute: typeof AuthenticatedLearnRoute
+  AuthenticatedNewsRoute: typeof AuthenticatedNewsRoute
+  AuthenticatedRewinderRoute: typeof AuthenticatedRewinderRoute
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppRoute: AuthenticatedAppRoute,
+  AuthenticatedBillsRoute: AuthenticatedBillsRoute,
   AuthenticatedBudgetsRoute: AuthenticatedBudgetsRoute,
   AuthenticatedCalculatorsRoute: AuthenticatedCalculatorsRoute,
   AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
   AuthenticatedComplianceRoute: AuthenticatedComplianceRoute,
   AuthenticatedGoalsRoute: AuthenticatedGoalsRoute,
+  AuthenticatedLearnRoute: AuthenticatedLearnRoute,
+  AuthenticatedNewsRoute: AuthenticatedNewsRoute,
+  AuthenticatedRewinderRoute: AuthenticatedRewinderRoute,
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRoute,
 }
 

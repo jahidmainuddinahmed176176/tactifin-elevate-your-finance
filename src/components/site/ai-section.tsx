@@ -15,6 +15,10 @@ const PILLS = [
   "Zakat Alerts",
   "Interest Exposure ML Reports",
   "AI Chatbot",
+  "Bill Pay & Autopay",
+  "Rewinder — Financial History Replay",
+  "Financial Tips & News",
+  "Learning Resources",
 ];
 
 export function AISection() {

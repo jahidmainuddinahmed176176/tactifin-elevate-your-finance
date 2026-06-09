@@ -1,4 +1,4 @@
-import { Wallet, Target, LineChart, Users, Banknote, Sparkles } from "lucide-react";
+import { Wallet, Target, LineChart, Users, Banknote, Sparkles, CreditCard, RotateCcw } from "lucide-react";
 
 const FEATURES = [
   { icon: Wallet, t: "Accounts & Tracking", d: "Income and expense tracking with auto-collection across cash, bank and mobile wallets." },
@@ -7,6 +7,8 @@ const FEATURES = [
   { icon: Users, t: "Borrow, Lend & Share", d: "Lending module, accounts receivable and expense sharing — built for people, not just balance sheets." },
   { icon: Banknote, t: "Shariah-Based Finance", d: "Islamic compliance checker with Halal/Haram detection, Zakat alerts and interest-exposure reports." },
   { icon: Sparkles, t: "AI Recommendations", d: "Personalised guidance, fraud detection and an AI chatbot that knows your finances." },
+  { icon: CreditCard, t: "Bill Pay System", d: "Track recurring bills, set autopay reminders, and never miss a due date — all categorised automatically." },
+  { icon: RotateCcw, t: "Rewinder (Automatics)", d: "Replay your financial history month by month with AI-generated insights and category breakdowns." },
 ];
 
 export function FeaturesGrid() {
