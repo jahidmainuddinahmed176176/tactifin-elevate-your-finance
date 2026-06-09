@@ -1,13 +1,13 @@
-import logoAsset from "@/assets/tactifin-logo.png.asset.json";
-
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border/40 bg-[color:var(--surface-sunken)] py-16">
+    <footer className="relative border-t border-border/40 bg-[color:var(--surface-sunken)] py-16">
+      {/* Thin gradient accent line at top */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 h-px w-1/2 bg-brand-gradient opacity-60" />
       <div className="mx-auto max-w-7xl px-6">
         <div className="grid gap-10 md:grid-cols-4">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2.5">
-              <img src={logoAsset.url} alt="Tactifin" className="h-9 w-9 rounded-full" />
+              <div className="h-9 w-9 rounded-full bg-brand-gradient shrink-0" />
               <span className="text-lg font-medium">Tactifin</span>
             </div>
             <p className="mt-4 max-w-sm text-sm text-muted-foreground">
@@ -17,18 +17,18 @@ export function SiteFooter() {
           <div>
             <div className="text-xs uppercase tracking-wider text-muted-foreground">Platform</div>
             <ul className="mt-4 space-y-2 text-sm">
-              <li><a href="#features" className="text-foreground/80 hover:text-foreground">Features</a></li>
-              <li><a href="#ai" className="text-foreground/80 hover:text-foreground">Intelligence</a></li>
-              <li><a href="#partners" className="text-foreground/80 hover:text-foreground">Partners</a></li>
-              <li><a href="#faq" className="text-foreground/80 hover:text-foreground">FAQ</a></li>
+              <li><a href="#features" className="text-foreground/70 transition-smooth hover:text-foreground">Features</a></li>
+              <li><a href="#ai" className="text-foreground/70 transition-smooth hover:text-foreground">Intelligence</a></li>
+              <li><a href="#partners" className="text-foreground/70 transition-smooth hover:text-foreground">Partners</a></li>
+              <li><a href="#faq" className="text-foreground/70 transition-smooth hover:text-foreground">FAQ</a></li>
             </ul>
           </div>
           <div>
             <div className="text-xs uppercase tracking-wider text-muted-foreground">Resources</div>
             <ul className="mt-4 space-y-2 text-sm">
-              <li><a href="/news" className="text-foreground/80 hover:text-foreground">Financial Tips &amp; News</a></li>
-              <li><a href="/learn" className="text-foreground/80 hover:text-foreground">Learning Resources</a></li>
-              <li><a href="#faq" className="text-foreground/80 hover:text-foreground">Beta Program</a></li>
+              <li><a href="/news" className="text-foreground/70 transition-smooth hover:text-foreground">Financial Tips &amp; News</a></li>
+              <li><a href="/learn" className="text-foreground/70 transition-smooth hover:text-foreground">Learning Resources</a></li>
+              <li><a href="#faq" className="text-foreground/70 transition-smooth hover:text-foreground">Beta Program</a></li>
             </ul>
           </div>
         </div>

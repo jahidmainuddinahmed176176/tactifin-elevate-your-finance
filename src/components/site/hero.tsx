@@ -1,11 +1,12 @@
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import logoAsset from "@/assets/tactifin-logo.png.asset.json";
 
 export function Hero() {
   return (
     <section className="relative overflow-hidden bg-hero pt-32 pb-24">
       <div className="absolute inset-0 grid-noise opacity-50" aria-hidden />
+      {/* Extra ambient glow */}
+      <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[420px] w-[820px] rounded-full bg-brand-gradient opacity-10 blur-[120px] pointer-events-none" aria-hidden />
       <div className="relative mx-auto max-w-7xl px-6">
         <div className="mx-auto max-w-3xl text-center">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/40 px-4 py-1.5 text-xs text-muted-foreground backdrop-blur">
@@ -21,10 +22,10 @@ export function Hero() {
             intelligent platform — built for the way you actually move money.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <Button size="lg" className="rounded-full px-6">
+            <Button size="lg" className="rounded-full px-8 shadow-glow">
               Get early access <ArrowRight className="ml-1.5 h-4 w-4" />
             </Button>
-            <Button size="lg" variant="ghost" className="rounded-full px-6">
+            <Button size="lg" variant="ghost" className="rounded-full px-8 border border-border/60">
               Explore the platform
             </Button>
           </div>
@@ -41,7 +42,7 @@ export function Hero() {
                   { k: "This month", v: "$6,240", d: "Under budget" },
                   { k: "Zakat estimate", v: "$1,108", d: "Auto-calculated" },
                 ].map((s) => (
-                  <div key={s.k} className="rounded-xl border border-border/60 bg-card p-5">
+                  <div key={s.k} className="rounded-xl border border-border/60 bg-card p-5 transition-smooth hover:-translate-y-0.5 hover:shadow-elegant">
                     <div className="text-xs uppercase tracking-wider text-muted-foreground">{s.k}</div>
                     <div className="mt-2 text-2xl">{s.v}</div>
                     <div className="mt-1 text-xs text-[color:var(--brand-bolt)]">{s.d}</div>
@@ -50,7 +51,7 @@ export function Hero() {
               </div>
               <div className="mt-6 flex items-center justify-between rounded-xl border border-border/60 bg-card p-5">
                 <div className="flex items-center gap-3">
-                  <img src={logoAsset.url} alt="" className="h-10 w-10 rounded-full" />
+                  <div className="h-10 w-10 rounded-full bg-brand-gradient shrink-0" />
                   <div>
                     <div className="text-sm">AI Categorization</div>
                     <div className="text-xs text-muted-foreground">14 transactions auto-sorted · 0 review needed</div>

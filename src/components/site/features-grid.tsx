@@ -16,7 +16,10 @@ export function FeaturesGrid() {
     <section id="features" className="border-t border-border/40 py-28">
       <div className="mx-auto max-w-7xl px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Features</div>
+          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--brand-bolt)]" />
+            Features
+          </div>
           <h2 className="mt-4 text-4xl md:text-5xl">
             Built with accountants,<br />
             <span className="italic text-brand-gradient">for everyone</span>.
@@ -30,11 +33,11 @@ export function FeaturesGrid() {
           {FEATURES.map((f) => (
             <article
               key={f.t}
-              className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card p-7 transition-smooth hover:border-border hover:-translate-y-1 hover:shadow-elegant"
+              className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card p-7 transition-smooth hover:border-[color:var(--brand-bolt)]/40 hover:-translate-y-1 hover:shadow-elegant"
             >
               <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-brand-gradient opacity-0 blur-2xl transition-smooth group-hover:opacity-20" />
               <div className="relative">
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border/60 bg-[color:var(--surface-elevated)]">
+                <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border/60 bg-[color:var(--surface-elevated)] transition-smooth group-hover:border-[color:var(--brand-bolt)]/40">
                   <f.icon className="h-5 w-5 text-[color:var(--brand-bolt)]" />
                 </div>
                 <h3 className="mt-5 text-xl">{f.t}</h3>

@@ -12,7 +12,10 @@ export function GrowthSection() {
       <div className="mx-auto max-w-7xl px-6">
         <div className="grid gap-16 md:grid-cols-2 md:items-end">
           <div>
-            <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">The platform</div>
+            <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--brand-bolt)]" />
+              The platform
+            </div>
             <h2 className="mt-4 text-4xl md:text-5xl">
               Unlock a new phase<br />of <span className="italic text-brand-gradient">financial clarity</span>.
             </h2>
@@ -26,6 +29,7 @@ export function GrowthSection() {
         <div className="mt-16 grid gap-px overflow-hidden rounded-3xl border border-border/60 bg-border/60 md:grid-cols-3">
           {STATS.map((s) => (
             <div key={s.k} className="group relative bg-card p-8 transition-smooth hover:bg-[color:var(--surface-elevated)]">
+              <div className="absolute bottom-0 left-0 right-0 h-px bg-brand-gradient opacity-0 transition-smooth group-hover:opacity-60" />
               <s.icon className="h-6 w-6 text-[color:var(--brand-bolt)]" />
               <div className="mt-6 text-xs uppercase tracking-wider text-muted-foreground">{s.k}</div>
               <div className="mt-2 text-2xl">{s.v}</div>
