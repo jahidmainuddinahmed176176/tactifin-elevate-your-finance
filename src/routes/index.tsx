@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ThemeProvider } from "@/components/site/theme-provider";
 import { SiteHeader } from "@/components/site/header";
 import { Hero } from "@/components/site/hero";
 import { GrowthSection } from "@/components/site/growth-section";
@@ -24,8 +23,7 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   return (
-    <ThemeProvider>
-      <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
         <SiteHeader />
         <main>
           <Hero />
@@ -37,7 +35,6 @@ function Index() {
           <FAQ />
         </main>
         <SiteFooter />
-      </div>
-    </ThemeProvider>
+    </div>
   );
 }

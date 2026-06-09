@@ -41,8 +41,11 @@ export function SiteHeader() {
           >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
-          <Button variant="default" size="sm" className="hidden rounded-full md:inline-flex">
-            Join Beta
+          <Button asChild variant="outline" size="sm" className="hidden rounded-full md:inline-flex">
+            <Link to="/auth">Sign in</Link>
+          </Button>
+          <Button asChild variant="default" size="sm" className="hidden rounded-full md:inline-flex">
+            <Link to="/app">Open app</Link>
           </Button>
           <button
             onClick={() => setOpen((o) => !o)}
