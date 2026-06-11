@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,11 +54,13 @@ function AuthPage() {
   }
 
   async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin + "/auth/callback",
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin + "/auth/callback",
+      },
     });
-    if (result.error) toast.error(result.error.message ?? "Google sign-in failed");
-    else if (!result.redirected) navigate({ to: "/app" });
+    if (error) toast.error(error.message ?? "Google sign-in failed");
   }
 
   return (
@@ -71,7 +72,9 @@ function AuthPage() {
           {mode === "signin" ? "Sign in to your Tactifin workspace." : "Start tracking your finances in seconds."}
         </p>
 
-        <Button onClick={google} variant="outline" className="mt-6 w-full">Continue with Google</Button>
+        <Button onClick={google} variant="outline" className="mt-6 w-full">
+          Continue with Google
+        </Button>
 
         <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
           <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
