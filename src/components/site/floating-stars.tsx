@@ -1,74 +1,87 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
-interface Star {
-  id: number;
-  x: number;
-  y: number;
-  size: number;
-  duration: number;
-  delay: number;
-  opacity: number;
-}
+const PARTICLE_COUNT = 55;
+
+// Brand-aligned colors: green bolt (dominant), blue accent, soft white
+const COLORS = [
+  // green bolt — most common
+  [120, 230, 130],
+  [120, 230, 130],
+  [120, 230, 130],
+  // blue accent
+  [100, 160, 255],
+  [100, 160, 255],
+  // soft white
+  [220, 230, 255],
+] as const;
 
 export function FloatingStars() {
-  const [stars, setStars] = useState<Star[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const styleRef = useRef<HTMLStyleElement | null>(null);
 
   useEffect(() => {
-    const starCount = 40;
-    const newStars: Star[] = [];
+    const container = containerRef.current;
+    if (!container) return;
 
-    for (let i = 0; i < starCount; i++) {
-      newStars.push({
-        id: i,
-        x: Math.random() * 100,
-        y: Math.random() * 100 + 100,
-        size: Math.random() * 3 + 1,
-        duration: Math.random() * 15 + 10,
-        delay: Math.random() * 10,
-        opacity: Math.random() * 0.5 + 0.2,
-      });
+    // Inject keyframes into a <style> tag once
+    if (!styleRef.current) {
+      const style = document.createElement("style");
+      style.textContent = `
+        @keyframes tsRise {
+          0%   { transform: translateY(0px)     translateX(0px); opacity: 0; }
+          6%   { opacity: 1; }
+          50%  { transform: translateY(-50vh)   translateX(var(--sx)); }
+          88%  { opacity: 0.5; }
+          100% { transform: translateY(-108vh)  translateX(0px); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+      styleRef.current = style;
     }
 
-    setStars(newStars);
+    const elements: HTMLElement[] = [];
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const [r, g, b] = COLORS[Math.floor(Math.random() * COLORS.length)];
+      const size     = Math.random() * 2.8 + 0.6;   // 0.6–3.4 px
+      const opacity  = Math.random() * 0.5 + 0.25;  // 0.25–0.75
+      const duration = Math.random() * 20 + 10;     // 10–30 s
+      const delay    = Math.random() * -20;          // negative = already mid-cycle on load
+      const left     = Math.random() * 100;          // 0–100 vw
+      const sway     = (Math.random() * 60 - 30);   // –30 to +30 px horizontal drift
+
+      const el = document.createElement("span");
+      el.style.cssText = `
+        position: absolute;
+        display: block;
+        border-radius: 50%;
+        bottom: -4px;
+        left: ${left}%;
+        width: ${size}px;
+        height: ${size}px;
+        --sx: ${sway}px;
+        background: rgba(${r},${g},${b},${opacity});
+        box-shadow:
+          0 0 ${size * 2.5}px ${size * 0.8}px rgba(${r},${g},${b},${opacity * 0.55}),
+          0 0 ${size * 5}px   ${size * 1.5}px rgba(${r},${g},${b},${opacity * 0.2});
+        animation: tsRise ${duration}s linear ${delay}s infinite;
+        will-change: transform, opacity;
+        pointer-events: none;
+      `;
+      container.appendChild(el);
+      elements.push(el);
+    }
+
+    return () => elements.forEach((el) => el.remove());
   }, []);
 
   return (
-    <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
-      {stars.map((star) => (
-        <div
-          key={star.id}
-          className="absolute rounded-full bg-[color:var(--brand-bolt)]"
-          style={{
-            left: `${star.x}%`,
-            top: `${star.y}%`,
-            width: `${star.size}px`,
-            height: `${star.size}px`,
-            opacity: star.opacity,
-            animation: `floatUp ${star.duration}s linear ${star.delay}s infinite`,
-            boxShadow: `0 0 ${star.size * 2}px rgba(120, 220, 130, 0.5), 0 0 ${star.size * 4}px rgba(120, 220, 130, 0.3)`,
-          }}
-        />
-      ))}
-      <style>{`
-        @keyframes floatUp {
-          0% {
-            transform: translateY(0) scale(1);
-            opacity: var(--star-opacity, 0.3);
-          }
-          10% {
-            opacity: calc(var(--star-opacity, 0.3) * 1.5);
-          }
-          90% {
-            opacity: calc(var(--star-opacity, 0.3) * 0.5);
-          }
-          100% {
-            transform: translateY(-120vh) scale(0.5);
-            opacity: 0;
-          }
-        }
-      `}</style>
-    </div>
+    <div
+      ref={containerRef}
+      className="pointer-events-none fixed inset-0 overflow-hidden z-0"
+      aria-hidden="true"
+    />
   );
 }
