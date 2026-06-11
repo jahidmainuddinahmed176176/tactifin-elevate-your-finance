@@ -199,3 +199,78 @@
     mask-image: radial-gradient(ellipse at center, black, transparent 70%);
   }
 }
+
+/* Glowing Button Effects */
+@layer components {
+  .btn-glow {
+    position: relative;
+    overflow: visible;
+  }
+
+  .btn-glow::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: var(--gradient-brand);
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.4s ease;
+    filter: blur(12px);
+  }
+
+  .btn-glow:hover::before {
+    opacity: 0.6;
+  }
+
+  .btn-glow::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--gradient-brand);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+  }
+
+  .btn-glow:hover::after {
+    opacity: 0.15;
+  }
+
+  /* Idle glow effect for primary buttons */
+  .btn-glow-idle {
+    position: relative;
+    box-shadow:
+      0 0 20px -5px color-mix(in oklab, var(--brand-bolt) 50%, transparent),
+      0 0 40px -10px color-mix(in oklab, var(--brand-blue) 30%, transparent);
+    transition: box-shadow 0.4s ease, transform 0.3s ease;
+  }
+
+  .btn-glow-idle:hover {
+    box-shadow:
+      0 0 30px -5px color-mix(in oklab, var(--brand-bolt) 70%, transparent),
+      0 0 60px -10px color-mix(in oklab, var(--brand-blue) 50%, transparent),
+      0 0 80px -15px color-mix(in oklab, var(--brand-bolt) 30%, transparent);
+    transform: translateY(-1px);
+  }
+
+  /* Animated glow pulse */
+  .btn-glow-pulse {
+    position: relative;
+    animation: glowPulse 3s ease-in-out infinite;
+  }
+
+  @keyframes glowPulse {
+    0%, 100% {
+      box-shadow:
+        0 0 20px -5px color-mix(in oklab, var(--brand-bolt) 40%, transparent),
+        0 0 40px -10px color-mix(in oklab, var(--brand-blue) 20%, transparent);
+    }
+    50% {
+      box-shadow:
+        0 0 30px -5px color-mix(in oklab, var(--brand-bolt) 60%, transparent),
+        0 0 60px -10px color-mix(in oklab, var(--brand-blue) 40%, transparent);
+    }
+  }
+}

@@ -23,10 +23,10 @@ export function Hero() {
             intelligent platform — built for the way you actually move money.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <Button size="lg" className="rounded-full px-8 shadow-glow">
+            <Button size="lg" className="rounded-full px-8 btn-glow-idle">
               Get early access <ArrowRight className="ml-1.5 h-4 w-4" />
             </Button>
-            <Button size="lg" variant="ghost" className="rounded-full px-8 border border-border/60">
+            <Button size="lg" variant="ghost" className="rounded-full px-8 border border-border/60 btn-glow">
               Explore the platform
             </Button>
           </div>
