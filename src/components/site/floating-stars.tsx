@@ -30,11 +30,11 @@ export function FloatingStars() {
       const style = document.createElement("style");
       style.textContent = `
         @keyframes tsRise {
-          0%   { transform: translateY(0px)     translateX(0px); opacity: 0; }
+          0%   { transform: translateY(0px)      translateX(0px); opacity: 0; }
           6%   { opacity: 1; }
-          50%  { transform: translateY(-50vh)   translateX(var(--sx)); }
+          50%  { transform: translateY(-50%)     translateX(var(--sx)); }
           88%  { opacity: 0.5; }
-          100% { transform: translateY(-108vh)  translateX(0px); opacity: 0; }
+          100% { transform: translateY(-110%)    translateX(0px); opacity: 0; }
         }
       `;
       document.head.appendChild(style);
@@ -80,7 +80,7 @@ export function FloatingStars() {
   return (
     <div
       ref={containerRef}
-      className="pointer-events-none fixed inset-0 overflow-hidden z-0"
+      className="pointer-events-none absolute inset-0 overflow-hidden z-0"
       aria-hidden="true"
     />
   );

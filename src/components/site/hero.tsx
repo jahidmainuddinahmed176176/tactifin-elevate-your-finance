@@ -1,3 +1,4 @@
+import { FloatingStars } from "@/components/site/floating-stars";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TactifinLogo } from "@/components/site/tactifin-logo";
@@ -5,6 +6,9 @@ import { TactifinLogo } from "@/components/site/tactifin-logo";
 export function Hero() {
   return (
     <section className="relative overflow-hidden bg-hero pt-32 pb-24">
+      {/* Particles — clipped to hero only by overflow-hidden on the section */}
+      <FloatingStars />
+
       <div className="absolute inset-0 grid-noise opacity-50" aria-hidden />
       {/* Extra ambient glow */}
       <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[420px] w-[820px] rounded-full bg-brand-gradient opacity-10 blur-[120px] pointer-events-none" aria-hidden />
