@@ -14,6 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      articles: {
+        Row: {
+          id: string
+          title: string
+          content: string
+          category: string
+          publish_date: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          content: string
+          category: string
+          publish_date: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          content?: string
+          category?: string
+          publish_date?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      courses: {
+        Row: {
+          id: string
+          title: string
+          description: string
+          content: string
+          category: string
+          level: string
+          duration_hours: number
+          instructor: string
+          published: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description: string
+          content: string
+          category: string
+          level: string
+          duration_hours: number
+          instructor: string
+          published?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string
+          content?: string
+          category?: string
+          level?: string
+          duration_hours?: number
+          instructor?: string
+          published?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          user_id: string
+          role: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          role: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          role?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       ai_messages: {
         Row: {
           content: string
@@ -285,7 +372,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: { _user_id: string; _role: string }
+        Returns: boolean
+      }
     }
     Enums: {
       txn_type: "income" | "expense"

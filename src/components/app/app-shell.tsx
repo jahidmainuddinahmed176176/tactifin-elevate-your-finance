@@ -16,6 +16,7 @@ import {
   RotateCcw,
   Newspaper,
   BookOpen,
+  Settings,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +24,7 @@ import { useTheme } from "@/components/site/theme-provider";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { TactifinLogo } from "@/components/site/tactifin-logo";
+import { useQuery } from "@tanstack/react-query";
 
 const NAV = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
@@ -44,6 +46,18 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [mobile, setMobile] = useState(false);
+
+  // Check if current user is admin
+  const { data: isAdmin } = useQuery({
+    queryKey: ["is-admin"],
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return false;
+      const { data } = await supabase.rpc("has_role", { _user_id: u.user.id, _role: "admin" });
+      return !!data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   async function signOut() {
     await qc.cancelQueries();
@@ -82,6 +96,22 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
+          {isAdmin && (
+            <>
+              <div className="my-2 h-px bg-border" />
+              <Link
+                to="/admin/users"
+                onClick={() => setMobile(false)}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                  path.startsWith("/admin") ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                )}
+              >
+                <Settings className="h-4 w-4" />
+                Admin
+              </Link>
+            </>
+          )}
         </nav>
         <div className="border-t border-border p-3 space-y-1">
           <button
