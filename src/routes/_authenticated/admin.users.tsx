@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -69,7 +69,14 @@ function AdminUsersPage() {
     <div className="min-h-screen bg-background p-6">
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Users</h1>
+          <div>
+            <h1 className="text-2xl font-semibold">Users</h1>
+            <p className="text-sm text-muted-foreground">
+              <span className="text-foreground">Users</span> ·{" "}
+              <Link to="/admin/articles" className="hover:underline">Articles</Link> ·{" "}
+              <Link to="/admin/courses" className="hover:underline">Courses</Link>
+            </p>
+          </div>
           <Button variant="outline" onClick={handleSignOut}>Sign out</Button>
         </div>
         <Card>

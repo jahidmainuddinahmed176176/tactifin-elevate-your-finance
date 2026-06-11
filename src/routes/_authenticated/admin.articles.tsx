@@ -116,7 +116,8 @@ function AdminArticlesPage() {
             <h1 className="text-2xl font-semibold">Tips &amp; News</h1>
             <p className="text-sm text-muted-foreground">
               <Link to="/admin/users" className="hover:underline">Users</Link> ·{" "}
-              <span className="text-foreground">Articles</span>
+              <span className="text-foreground">Articles</span> ·{" "}
+              <Link to="/admin/courses" className="hover:underline">Courses</Link>
             </p>
           </div>
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
