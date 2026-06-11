@@ -15,7 +15,7 @@ export const listThreads = createServerFn({ method: "GET" })
 
 export const createThread = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ title: z.string().min(1).max(120).optional() }).parse(d))
+  .validator((d: unknown) => z.object({ title: z.string().min(1).max(120).optional() }).parse(d))
   .handler(async ({ context, data }) => {
     const { data: row, error } = await context.supabase
       .from("ai_threads")
@@ -28,7 +28,7 @@ export const createThread = createServerFn({ method: "POST" })
 
 export const deleteThread = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     const { error } = await context.supabase.from("ai_threads").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -37,7 +37,7 @@ export const deleteThread = createServerFn({ method: "POST" })
 
 export const getMessages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ threadId: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ threadId: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     const { data: rows, error } = await context.supabase
       .from("ai_messages")

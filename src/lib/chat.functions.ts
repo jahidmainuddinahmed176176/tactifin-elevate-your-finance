@@ -12,7 +12,7 @@ Keep answers concise and practical. Use markdown when useful.`;
 
 export const sendChatMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z.object({
       threadId: z.string().uuid(),
       content: z.string().min(1).max(4000),

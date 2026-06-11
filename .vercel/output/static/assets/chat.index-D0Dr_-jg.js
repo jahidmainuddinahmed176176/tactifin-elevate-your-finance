@@ -1,1 +1,0 @@
-import{j as t}from"./index-DlpEWlBQ.js";import{B as e}from"./bot-5bABPfkx.js";const a=()=>t.jsxs("div",{className:"m-auto flex flex-col items-center gap-3 p-8 text-center text-muted-foreground",children:[t.jsx(e,{className:"h-10 w-10"}),t.jsx("p",{children:"Start a new chat to talk with the Tactifin AI Assistant."})]});export{a as component};
