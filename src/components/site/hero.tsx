@@ -1,10 +1,13 @@
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TactifinLogo } from "@/components/site/tactifin-logo";
+import { AnimatedStarfield } from "@/components/site/animated-starfield";
 
 export function Hero() {
   return (
     <section className="relative overflow-hidden bg-hero pt-32 pb-24">
+      {/* Animated Starfield Background */}
+      <AnimatedStarfield />
       <div className="absolute inset-0 grid-noise opacity-50" aria-hidden />
       {/* Extra ambient glow */}
       <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[420px] w-[820px] rounded-full bg-brand-gradient opacity-10 blur-[120px] pointer-events-none" aria-hidden />
@@ -23,7 +26,13 @@ export function Hero() {
             intelligent platform — built for the way you actually move money.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <Button size="lg" className="rounded-full px-8 shadow-glow">
+            <Button 
+              size="lg" 
+              className="rounded-full px-8 shadow-glow relative bg-white text-black hover:bg-white hover:shadow-lg hover:scale-105 transition-all duration-300 font-semibold"
+              style={{
+                boxShadow: "0 0 20px rgba(255, 193, 7, 0.6), 0 0 40px rgba(255, 193, 7, 0.3)"
+              }}
+            >
               Get early access <ArrowRight className="ml-1.5 h-4 w-4" />
             </Button>
             <Button size="lg" variant="ghost" className="rounded-full px-8 border border-border/60">
