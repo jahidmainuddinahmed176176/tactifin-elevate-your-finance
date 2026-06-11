@@ -25,6 +25,8 @@ import { Route as AuthenticatedBillsRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
+import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedAdminArticlesRouteImport } from './routes/_authenticated/admin.articles'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -108,6 +110,17 @@ const AuthenticatedChatThreadIdRoute =
     path: '/$threadId',
     getParentRoute: () => AuthenticatedChatRoute,
   } as any)
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminArticlesRoute =
+  AuthenticatedAdminArticlesRouteImport.update({
+    id: '/admin/articles',
+    path: '/admin/articles',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -123,6 +136,8 @@ export interface FileRoutesByFullPath {
   '/news': typeof AuthenticatedNewsRoute
   '/rewinder': typeof AuthenticatedRewinderRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
+  '/admin/articles': typeof AuthenticatedAdminArticlesRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
 }
@@ -139,6 +154,8 @@ export interface FileRoutesByTo {
   '/news': typeof AuthenticatedNewsRoute
   '/rewinder': typeof AuthenticatedRewinderRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
+  '/admin/articles': typeof AuthenticatedAdminArticlesRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/chat': typeof AuthenticatedChatIndexRoute
 }
@@ -158,6 +175,8 @@ export interface FileRoutesById {
   '/_authenticated/news': typeof AuthenticatedNewsRoute
   '/_authenticated/rewinder': typeof AuthenticatedRewinderRoute
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
+  '/_authenticated/admin/articles': typeof AuthenticatedAdminArticlesRoute
+  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/chat/$threadId': typeof AuthenticatedChatThreadIdRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
 }
@@ -177,6 +196,8 @@ export interface FileRouteTypes {
     | '/news'
     | '/rewinder'
     | '/transactions'
+    | '/admin/articles'
+    | '/admin/users'
     | '/chat/$threadId'
     | '/chat/'
   fileRoutesByTo: FileRoutesByTo
@@ -193,6 +214,8 @@ export interface FileRouteTypes {
     | '/news'
     | '/rewinder'
     | '/transactions'
+    | '/admin/articles'
+    | '/admin/users'
     | '/chat/$threadId'
     | '/chat'
   id:
@@ -211,6 +234,8 @@ export interface FileRouteTypes {
     | '/_authenticated/news'
     | '/_authenticated/rewinder'
     | '/_authenticated/transactions'
+    | '/_authenticated/admin/articles'
+    | '/_authenticated/admin/users'
     | '/_authenticated/chat/$threadId'
     | '/_authenticated/chat/'
   fileRoutesById: FileRoutesById
@@ -335,6 +360,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatThreadIdRouteImport
       parentRoute: typeof AuthenticatedChatRoute
     }
+    '/_authenticated/admin/users': {
+      id: '/_authenticated/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/articles': {
+      id: '/_authenticated/admin/articles'
+      path: '/admin/articles'
+      fullPath: '/admin/articles'
+      preLoaderRoute: typeof AuthenticatedAdminArticlesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -363,6 +402,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNewsRoute: typeof AuthenticatedNewsRoute
   AuthenticatedRewinderRoute: typeof AuthenticatedRewinderRoute
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRoute
+  AuthenticatedAdminArticlesRoute: typeof AuthenticatedAdminArticlesRoute
+  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -377,6 +418,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNewsRoute: AuthenticatedNewsRoute,
   AuthenticatedRewinderRoute: AuthenticatedRewinderRoute,
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRoute,
+  AuthenticatedAdminArticlesRoute: AuthenticatedAdminArticlesRoute,
+  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
