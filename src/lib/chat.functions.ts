@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
 import { z } from "zod";
-import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { createGeminiProvider } from "./ai-gateway.server";
 
 const SYSTEM = `You are Tactifin AI, a friendly personal-finance assistant.
 You help users with budgeting, expense categorization (Food, Rent, Business, Taxi, etc.),
@@ -19,10 +19,9 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ context, data }) => {
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
+    const key = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    if (!key) throw new Error("Missing GEMINI_API_KEY");
 
-    // Save user message
     const { error: e1 } = await context.supabase.from("ai_messages").insert({
       thread_id: data.threadId,
       user_id: context.userId,
@@ -31,7 +30,6 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     });
     if (e1) throw new Error(e1.message);
 
-    // Load history
     const { data: history, error: e2 } = await context.supabase
       .from("ai_messages")
       .select("role,content")
@@ -39,9 +37,9 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       .order("created_at", { ascending: true });
     if (e2) throw new Error(e2.message);
 
-    const gateway = createLovableAiGatewayProvider(key);
+    const gemini = createGeminiProvider(key);
     const result = await generateText({
-      model: gateway("google/gemini-3-flash-preview"),
+      model: gemini("gemini-2.0-flash"),
       system: SYSTEM,
       messages: (history ?? []).map((m) => ({
         role: m.role as "user" | "assistant" | "system",
@@ -58,7 +56,6 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     });
     if (e3) throw new Error(e3.message);
 
-    // Touch thread updated_at + title if first message
     const title = data.content.slice(0, 60);
     await context.supabase
       .from("ai_threads")

@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { isUserAdmin } from "@/lib/admin";
 
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden");
+async function assertAdmin(supabase: Parameters<typeof isUserAdmin>[0], userId: string) {
+  const ok = await isUserAdmin(supabase, userId);
+  if (!ok) throw new Error("Forbidden");
 }
 
 export const listUsers = createServerFn({ method: "GET" })
@@ -36,9 +36,6 @@ export const deleteUser = createServerFn({ method: "POST" })
 export const getMyRole = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    return { isAdmin: !!data, userId: context.userId };
+    const isAdmin = await isUserAdmin(context.supabase, context.userId);
+    return { isAdmin, userId: context.userId };
   });

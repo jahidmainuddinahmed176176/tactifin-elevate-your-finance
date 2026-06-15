@@ -38,7 +38,7 @@ function AdminUsersPage() {
     role().then((r) => {
       if (!r.isAdmin) {
         toast.error("Admins only");
-        navigate({ to: "/" });
+        navigate({ to: "/app" });
       } else setAllowed(true);
     });
   }, [role, navigate]);

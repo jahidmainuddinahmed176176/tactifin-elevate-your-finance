@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { isUserAdmin } from "@/lib/admin";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
 const CATEGORIES = ["Tips", "Markets", "Islamic Finance", "Tax", "Savings"] as const;
@@ -51,10 +52,8 @@ function AdminArticlesPage() {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return navigate({ to: "/auth" });
-      const { data: isAdmin } = await supabase.rpc("has_role", {
-        _user_id: u.user.id, _role: "admin",
-      });
-      if (!isAdmin) { toast.error("Admins only"); navigate({ to: "/" }); return; }
+      const isAdmin = await isUserAdmin(supabase, u.user.id);
+      if (!isAdmin) { toast.error("Admins only"); navigate({ to: "/app" }); return; }
       setAllowed(true);
     })();
   }, [navigate]);

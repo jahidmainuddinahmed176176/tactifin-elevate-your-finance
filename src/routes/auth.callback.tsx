@@ -10,29 +10,38 @@ function AuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Supabase handles the hash fragment automatically on the client.
-    // We just need to wait for the session to be established, then redirect.
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        navigate({ to: "/app", replace: true });
-      } else {
-        // If there's a code in the URL (PKCE flow), exchangeCodeForSession handles it.
-        const url = new URL(window.location.href);
-        const code = url.searchParams.get("code");
-        if (code) {
-          supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-            if (error) {
-              console.error("OAuth callback error:", error);
-              navigate({ to: "/auth", replace: true });
-            } else {
-              navigate({ to: "/app", replace: true });
-            }
-          });
-        } else {
-          navigate({ to: "/auth", replace: true });
+    let cancelled = false;
+
+    async function completeSignIn() {
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+      const errorDescription = url.searchParams.get("error_description");
+
+      if (errorDescription) {
+        console.error("OAuth callback error:", errorDescription);
+        if (!cancelled) navigate({ to: "/auth", replace: true });
+        return;
+      }
+
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          console.error("OAuth callback error:", error);
+          if (!cancelled) navigate({ to: "/auth", replace: true });
+          return;
         }
       }
-    });
+
+      const { data } = await supabase.auth.getSession();
+      if (!cancelled) {
+        navigate({ to: data.session ? "/app" : "/auth", replace: true });
+      }
+    }
+
+    completeSignIn();
+    return () => {
+      cancelled = true;
+    };
   }, [navigate]);
 
   return (

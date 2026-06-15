@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/components/site/theme-provider";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { isUserAdmin } from "@/lib/admin";
 import { TactifinLogo } from "@/components/site/tactifin-logo";
 import { useQuery } from "@tanstack/react-query";
 
@@ -53,8 +54,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     queryFn: async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return false;
-      const { data } = await supabase.rpc("has_role", { _user_id: u.user.id, _role: "admin" });
-      return !!data;
+      return isUserAdmin(supabase, u.user.id);
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -100,7 +100,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <>
               <div className="my-2 h-px bg-border" />
               <Link
-                to="/admin/users"
+                to="/admin"
                 onClick={() => setMobile(false)}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",

@@ -24,6 +24,7 @@ import { Route as AuthenticatedCalculatorsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedBudgetsRouteImport } from './routes/_authenticated/budgets'
 import { Route as AuthenticatedBillsRouteImport } from './routes/_authenticated/bills'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
@@ -106,6 +107,11 @@ const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   path: '/app',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -118,26 +124,27 @@ const AuthenticatedChatThreadIdRoute =
     getParentRoute: () => AuthenticatedChatRoute,
   } as any)
 const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
-  id: '/admin/users',
-  path: '/admin/users',
-  getParentRoute: () => AuthenticatedRouteRoute,
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
 const AuthenticatedAdminCoursesRoute =
   AuthenticatedAdminCoursesRouteImport.update({
-    id: '/admin/courses',
-    path: '/admin/courses',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/courses',
+    path: '/courses',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminArticlesRoute =
   AuthenticatedAdminArticlesRouteImport.update({
-    id: '/admin/articles',
-    path: '/admin/articles',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/articles',
+    path: '/articles',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/app': typeof AuthenticatedAppRoute
   '/bills': typeof AuthenticatedBillsRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/app': typeof AuthenticatedAppRoute
   '/bills': typeof AuthenticatedBillsRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRoute
   '/_authenticated/bills': typeof AuthenticatedBillsRoute
   '/_authenticated/budgets': typeof AuthenticatedBudgetsRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/admin'
     | '/app'
     | '/bills'
     | '/budgets'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/admin'
     | '/app'
     | '/bills'
     | '/budgets'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/admin'
     | '/_authenticated/app'
     | '/_authenticated/bills'
     | '/_authenticated/budgets'
@@ -378,6 +390,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/chat/': {
       id: '/_authenticated/chat/'
       path: '/'
@@ -394,27 +413,42 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/admin/users': {
       id: '/_authenticated/admin/users'
-      path: '/admin/users'
+      path: '/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/courses': {
       id: '/_authenticated/admin/courses'
-      path: '/admin/courses'
+      path: '/courses'
       fullPath: '/admin/courses'
       preLoaderRoute: typeof AuthenticatedAdminCoursesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/articles': {
       id: '/_authenticated/admin/articles'
-      path: '/admin/articles'
+      path: '/articles'
       fullPath: '/admin/articles'
       preLoaderRoute: typeof AuthenticatedAdminArticlesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedAdminRoute
     }
   }
 }
+
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminArticlesRoute: typeof AuthenticatedAdminArticlesRoute
+  AuthenticatedAdminCoursesRoute: typeof AuthenticatedAdminCoursesRoute
+  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminArticlesRoute: AuthenticatedAdminArticlesRoute,
+  AuthenticatedAdminCoursesRoute: AuthenticatedAdminCoursesRoute,
+  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
 interface AuthenticatedChatRouteChildren {
   AuthenticatedChatThreadIdRoute: typeof AuthenticatedChatThreadIdRoute
@@ -430,6 +464,7 @@ const AuthenticatedChatRouteWithChildren =
   AuthenticatedChatRoute._addFileChildren(AuthenticatedChatRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
   AuthenticatedBillsRoute: typeof AuthenticatedBillsRoute
   AuthenticatedBudgetsRoute: typeof AuthenticatedBudgetsRoute
@@ -441,12 +476,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNewsRoute: typeof AuthenticatedNewsRoute
   AuthenticatedRewinderRoute: typeof AuthenticatedRewinderRoute
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRoute
-  AuthenticatedAdminArticlesRoute: typeof AuthenticatedAdminArticlesRoute
-  AuthenticatedAdminCoursesRoute: typeof AuthenticatedAdminCoursesRoute
-  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedAppRoute: AuthenticatedAppRoute,
   AuthenticatedBillsRoute: AuthenticatedBillsRoute,
   AuthenticatedBudgetsRoute: AuthenticatedBudgetsRoute,
@@ -458,9 +491,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNewsRoute: AuthenticatedNewsRoute,
   AuthenticatedRewinderRoute: AuthenticatedRewinderRoute,
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRoute,
-  AuthenticatedAdminArticlesRoute: AuthenticatedAdminArticlesRoute,
-  AuthenticatedAdminCoursesRoute: AuthenticatedAdminCoursesRoute,
-  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

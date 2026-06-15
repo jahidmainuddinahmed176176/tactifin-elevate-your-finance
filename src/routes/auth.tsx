@@ -54,13 +54,26 @@ function AuthPage() {
   }
 
   async function google() {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin + "/auth/callback",
-      },
-    });
-    if (error) toast.error(error.message ?? "Google sign-in failed");
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: { access_type: "offline", prompt: "consent" },
+        },
+      });
+      if (error) throw error;
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      toast.error("Google sign-in could not start. Check Supabase OAuth settings.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Google sign-in failed");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -72,7 +85,7 @@ function AuthPage() {
           {mode === "signin" ? "Sign in to your Tactifin workspace." : "Start tracking your finances in seconds."}
         </p>
 
-        <Button onClick={google} variant="outline" className="mt-6 w-full">
+        <Button onClick={google} variant="outline" className="mt-6 w-full" disabled={loading}>
           Continue with Google
         </Button>
 
