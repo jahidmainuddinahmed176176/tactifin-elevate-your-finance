@@ -22,21 +22,7 @@
 - Financial tips & news
 - Newsletter subscription
 
-## Environment Variables
-```env
-SUPABASE_URL="https://aurdpgnwxttxduozadtq.supabase.co"
-VITE_SUPABASE_URL="https://aurdpgnwxttxduozadtq.supabase.co"
-SUPABASE_PUBLISHABLE_KEY="your_anon_key"
-VITE_SUPABASE_PUBLISHABLE_KEY="your_anon_key"
-```
-
-## Run Locally
-```bash
-npm install
-npm run dev
-```
 
 ## Links
 - **Live Site:** https://tactifin-elevate-your-finance.vercel.app/
-- **Supabase Project:** aurdpgnwxttxduozadtq
 ```
