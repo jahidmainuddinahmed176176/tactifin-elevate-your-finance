@@ -7,7 +7,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ context, data }) => {
-    const key = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    const key = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY ?? process.env.VITE_GEMINI_API_KEY;
     if (!key) throw new Error("Missing GEMINI_API_KEY");
 
     const { error: e1 } = await context.supabase.from("ai_messages").insert({
