@@ -2,7 +2,21 @@
 
 import { createLovableAuth } from "@lovable.dev/cloud-auth-js";
 import { supabase } from "../supabase/client";
-const lovableAuth = createLovableAuth();
+
+// Lazy, client-only initialization — createLovableAuth() must NOT run during SSR
+// because it makes network requests to Lovable's infrastructure which are not
+// available outside the Lovable.dev platform.
+let _lovableAuth: ReturnType<typeof createLovableAuth> | null = null;
+
+function getLovableAuth(): ReturnType<typeof createLovableAuth> {
+  if (typeof window === "undefined") {
+    throw new Error("Lovable auth is only available on the client side.");
+  }
+  if (!_lovableAuth) {
+    _lovableAuth = createLovableAuth();
+  }
+  return _lovableAuth;
+}
 
 type SignInOptions = {
   redirect_uri?: string;
@@ -12,6 +26,7 @@ type SignInOptions = {
 export const lovable = {
   auth: {
     signInWithOAuth: async (provider: "google" | "apple" | "microsoft" | "lovable", opts?: SignInOptions) => {
+      const lovableAuth = getLovableAuth();
       const result = await lovableAuth.signInWithOAuth(provider, {
         redirect_uri: opts?.redirect_uri,
         extraParams: {
