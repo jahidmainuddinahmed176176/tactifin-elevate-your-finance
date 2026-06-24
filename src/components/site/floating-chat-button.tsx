@@ -1,6 +1,4 @@
 import { Bot, X } from "lucide-react";
-import { useServerFn } from "@tanstack/react-start";
-import { createPublicThread } from "@/lib/threads.functions";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { PublicChatInterface } from "./public-chat-interface";
@@ -8,31 +6,27 @@ import { PublicChatInterface } from "./public-chat-interface";
 export function FloatingChatButton() {
   const [path, setPath] = useState<string>("");
   const [mounted, setMounted] = useState(false);
-  const create = useServerFn(createPublicThread);
   const [isOpen, setIsOpen] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Get current path on client side only
   useEffect(() => {
-    const currentPath = window.location.pathname;
-    setPath(currentPath);
+    setPath(window.location.pathname);
     setMounted(true);
   }, []);
 
-  // Don't show button on full chat page, but show it if opening modal chat
+  if (!mounted) return null;
   if (mounted && path.startsWith("/chat") && !isOpen) return null;
-  if (!mounted) return null; // Don't render on server
 
   async function handleClick() {
-    // Create a new public thread and open chat modal (works without login)
     setLoading(true);
     try {
-      const thread = await create({ data: {} });
-      setThreadId(thread.id);
+      // Generate a local thread ID — no server call needed
+      const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      setThreadId(id);
       setIsOpen(true);
     } catch (error) {
-      console.error("Failed to create chat thread:", error);
+      console.error("Failed to open chat:", error);
     } finally {
       setLoading(false);
     }
@@ -63,6 +57,7 @@ export function FloatingChatButton() {
   return (
     <button
       onClick={handleClick}
+      disabled={loading}
       className={cn(
         "fixed bottom-6 right-6 md:bottom-8 md:right-8 z-50",
         "flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-full",
