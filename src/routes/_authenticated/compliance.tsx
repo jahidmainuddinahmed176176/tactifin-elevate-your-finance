@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { getTransactions } from "@/lib/local-storage";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,12 +19,9 @@ function CompliancePage() {
   const [result, setResult] = useState<{ isHaram: boolean; reason?: string } | null>(null);
 
   const { data: flagged = [] } = useQuery({
-    queryKey: ["flagged"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("transactions").select("*").eq("is_haram", true).order("transaction_date", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
+    queryKey: ["transactions"],
+    queryFn: () => getTransactions(),
+    select: (txns) => txns.filter((t) => t.is_haram),
   });
 
   return (
@@ -65,7 +62,7 @@ function CompliancePage() {
                     <div className="font-medium">{t.description || t.category}</div>
                     <div className="text-xs text-amber-500">⚠ {t.haram_reason}</div>
                   </div>
-                  <div className="text-sm text-muted-foreground">${Number(t.amount).toFixed(2)}</div>
+                  <div className="text-sm text-muted-foreground">${t.amount.toFixed(2)}</div>
                 </div>
               ))}
             </div>
