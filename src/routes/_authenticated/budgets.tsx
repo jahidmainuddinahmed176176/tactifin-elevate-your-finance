@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { getBudgets, upsertBudget, deleteBudget, getTransactions } from "@/lib/local-storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,20 +24,12 @@ function BudgetsPage() {
 
   const { data: budgets = [] } = useQuery({
     queryKey: ["budgets"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("budgets").select("*").order("category");
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => getBudgets(),
   });
 
   const { data: txns = [] } = useQuery({
     queryKey: ["transactions"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("transactions").select("category,amount,type,transaction_date");
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => getTransactions(),
   });
 
   const now = new Date();
@@ -45,18 +37,12 @@ function BudgetsPage() {
   const spentBy: Record<string, number> = {};
   for (const t of txns) {
     if (t.type !== "expense" || t.transaction_date < monthStart) continue;
-    spentBy[t.category] = (spentBy[t.category] ?? 0) + Number(t.amount);
+    spentBy[t.category] = (spentBy[t.category] ?? 0) + t.amount;
   }
 
   const add = useMutation({
-    mutationFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) throw new Error("Not signed in");
-      const { error } = await supabase.from("budgets").upsert(
-        { user_id: u.user.id, category, monthly_limit: Number(limit) },
-        { onConflict: "user_id,category" },
-      );
-      if (error) throw error;
+    mutationFn: () => {
+      upsertBudget(category, Number(limit));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["budgets"] });
@@ -67,10 +53,7 @@ function BudgetsPage() {
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("budgets").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => { deleteBudget(id); },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["budgets"] }),
   });
 
@@ -104,16 +87,15 @@ function BudgetsPage() {
       <div className="grid gap-4 md:grid-cols-2">
         {budgets.map((b) => {
           const spent = spentBy[b.category] ?? 0;
-          const limit = Number(b.monthly_limit);
-          const pct = Math.min(100, (spent / limit) * 100);
-          const over = spent > limit;
-          const near = spent > limit * 0.8 && !over;
+          const pct = Math.min(100, (spent / b.monthly_limit) * 100);
+          const over = spent > b.monthly_limit;
+          const near = spent > b.monthly_limit * 0.8 && !over;
           return (
             <Card key={b.id}>
               <CardHeader className="flex flex-row items-start justify-between">
                 <div>
                   <CardTitle>{b.category}</CardTitle>
-                  <p className="mt-1 text-xs text-muted-foreground">${spent.toFixed(2)} of ${limit.toFixed(2)} this month</p>
+                  <p className="mt-1 text-xs text-muted-foreground">${spent.toFixed(2)} of ${b.monthly_limit.toFixed(2)} this month</p>
                 </div>
                 <button onClick={() => del.mutate(b.id)} className="text-muted-foreground hover:text-destructive">
                   <Trash2 className="h-4 w-4" />
@@ -121,16 +103,8 @@ function BudgetsPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <Progress value={pct} />
-                {over && (
-                  <div className="flex items-center gap-2 text-sm text-rose-500">
-                    <AlertTriangle className="h-4 w-4" /> Over budget by ${(spent - limit).toFixed(2)}
-                  </div>
-                )}
-                {near && (
-                  <div className="flex items-center gap-2 text-sm text-amber-500">
-                    <AlertTriangle className="h-4 w-4" /> Approaching limit
-                  </div>
-                )}
+                {over && <div className="flex items-center gap-2 text-sm text-rose-500"><AlertTriangle className="h-4 w-4" /> Over budget by ${(spent - b.monthly_limit).toFixed(2)}</div>}
+                {near && <div className="flex items-center gap-2 text-sm text-amber-500"><AlertTriangle className="h-4 w-4" /> Approaching limit</div>}
               </CardContent>
             </Card>
           );

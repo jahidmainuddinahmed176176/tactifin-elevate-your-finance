@@ -1,17 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { getTransactions, addTransaction, updateTransaction, deleteTransaction } from "@/lib/local-storage";
+import type { Transaction } from "@/lib/local-storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CATEGORIES, detectHaram } from "@/lib/haram";
 import { toast } from "sonner";
 import { Trash2, Pencil } from "lucide-react";
@@ -21,17 +18,6 @@ export const Route = createFileRoute("/_authenticated/transactions")({
   component: TransactionsPage,
 });
 
-type TxnRow = {
-  id: string;
-  type: "income" | "expense";
-  amount: number;
-  category: string;
-  description: string | null;
-  transaction_date: string;
-  is_haram: boolean;
-  haram_reason: string | null;
-};
-
 function TransactionsPage() {
   const qc = useQueryClient();
   const [type, setType] = useState<"income" | "expense">("expense");
@@ -40,8 +26,7 @@ function TransactionsPage() {
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
 
-  // Edit state
-  const [editTxn, setEditTxn] = useState<TxnRow | null>(null);
+  const [editTxn, setEditTxn] = useState<Transaction | null>(null);
   const [editType, setEditType] = useState<"income" | "expense">("expense");
   const [editAmount, setEditAmount] = useState("");
   const [editCategory, setEditCategory] = useState("Food");
@@ -50,54 +35,28 @@ function TransactionsPage() {
 
   const { data: txns = [] } = useQuery({
     queryKey: ["transactions"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("transactions").select("*").order("transaction_date", { ascending: false });
-      if (error) throw error;
-      return data as TxnRow[];
-    },
+    queryFn: () => getTransactions(),
   });
 
   const add = useMutation({
-    mutationFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) throw new Error("Not signed in");
+    mutationFn: () => {
       const haram = detectHaram(`${category} ${description}`);
-      const { error } = await supabase.from("transactions").insert({
-        user_id: u.user.id,
-        type,
-        amount: Number(amount),
-        category,
-        description,
-        transaction_date: date,
-        is_haram: haram.isHaram,
-        haram_reason: haram.reason ?? null,
-      });
-      if (error) throw error;
+      addTransaction({ type, amount: Number(amount), category, description, transaction_date: date, is_haram: haram.isHaram, haram_reason: haram.reason ?? null });
       if (haram.isHaram) toast.warning(`Flagged: ${haram.reason}`);
       else toast.success("Transaction added");
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["transactions"] });
-      setAmount("");
-      setDescription("");
+      setAmount(""); setDescription("");
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
   const edit = useMutation({
-    mutationFn: async () => {
+    mutationFn: () => {
       if (!editTxn) return;
       const haram = detectHaram(`${editCategory} ${editDescription}`);
-      const { error } = await supabase.from("transactions").update({
-        type: editType,
-        amount: Number(editAmount),
-        category: editCategory,
-        description: editDescription,
-        transaction_date: editDate,
-        is_haram: haram.isHaram,
-        haram_reason: haram.reason ?? null,
-      }).eq("id", editTxn.id);
-      if (error) throw error;
+      updateTransaction(editTxn.id, { type: editType, amount: Number(editAmount), category: editCategory, description: editDescription, transaction_date: editDate, is_haram: haram.isHaram, haram_reason: haram.reason ?? null });
       if (haram.isHaram) toast.warning(`Updated & flagged: ${haram.reason}`);
       else toast.success("Transaction updated");
     },
@@ -109,14 +68,11 @@ function TransactionsPage() {
   });
 
   const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("transactions").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => { deleteTransaction(id); },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["transactions"] }),
   });
 
-  function openEdit(t: TxnRow) {
+  function openEdit(t: Transaction) {
     setEditTxn(t);
     setEditType(t.type);
     setEditAmount(String(t.amount));
@@ -129,16 +85,13 @@ function TransactionsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl">Transactions</h1>
-        <p className="text-sm text-muted-foreground">Record income and expenses. Categories: Food, Rent, Business, Taxi and more.</p>
+        <p className="text-sm text-muted-foreground">Record income and expenses. Data saved to your device only.</p>
       </div>
 
       <Card>
         <CardHeader><CardTitle>Add transaction</CardTitle></CardHeader>
         <CardContent>
-          <form
-            onSubmit={(e) => { e.preventDefault(); add.mutate(); }}
-            className="grid gap-4 md:grid-cols-6"
-          >
+          <form onSubmit={(e) => { e.preventDefault(); add.mutate(); }} className="grid gap-4 md:grid-cols-6">
             <div className="md:col-span-1">
               <Label>Type</Label>
               <Select value={type} onValueChange={(v) => setType(v as "income" | "expense")}>
@@ -157,9 +110,7 @@ function TransactionsPage() {
               <Label>Category</Label>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
+                <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="md:col-span-2">
@@ -178,7 +129,7 @@ function TransactionsPage() {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>All transactions</CardTitle></CardHeader>
+        <CardHeader><CardTitle>All transactions ({txns.length})</CardTitle></CardHeader>
         <CardContent>
           {txns.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nothing yet.</p>
@@ -195,7 +146,7 @@ function TransactionsPage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className={t.type === "income" ? "text-emerald-500" : "text-rose-500"}>
-                      {t.type === "income" ? "+" : "-"}${Number(t.amount).toFixed(2)}
+                      {t.type === "income" ? "+" : "-"}${t.amount.toFixed(2)}
                     </span>
                     <button onClick={() => openEdit(t)} className="text-muted-foreground hover:text-foreground" title="Edit">
                       <Pencil className="h-4 w-4" />
@@ -211,16 +162,10 @@ function TransactionsPage() {
         </CardContent>
       </Card>
 
-      {/* Edit dialog */}
       <Dialog open={!!editTxn} onOpenChange={(open) => { if (!open) setEditTxn(null); }}>
         <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Edit transaction</DialogTitle>
-          </DialogHeader>
-          <form
-            onSubmit={(e) => { e.preventDefault(); edit.mutate(); }}
-            className="grid gap-4 md:grid-cols-2"
-          >
+          <DialogHeader><DialogTitle>Edit transaction</DialogTitle></DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); edit.mutate(); }} className="grid gap-4 md:grid-cols-2">
             <div>
               <Label>Type</Label>
               <Select value={editType} onValueChange={(v) => setEditType(v as "income" | "expense")}>
@@ -239,9 +184,7 @@ function TransactionsPage() {
               <Label>Category</Label>
               <Select value={editCategory} onValueChange={setEditCategory}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
+                <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>

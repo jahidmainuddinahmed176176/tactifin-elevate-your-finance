@@ -1,4 +1,4 @@
-import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Receipt,
@@ -7,7 +7,6 @@ import {
   Calculator,
   ShieldCheck,
   Bot,
-  LogOut,
   Moon,
   Sun,
   Menu,
@@ -16,16 +15,11 @@ import {
   RotateCcw,
   Newspaper,
   BookOpen,
-  Settings,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/components/site/theme-provider";
-import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { isUserAdmin } from "@/lib/admin";
 import { TactifinLogo } from "@/components/site/tactifin-logo";
-import { useQuery } from "@tanstack/react-query";
 
 const NAV = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
@@ -44,27 +38,7 @@ const NAV = [
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const { theme, toggle } = useTheme();
-  const navigate = useNavigate();
-  const qc = useQueryClient();
   const [mobile, setMobile] = useState(false);
-
-  // Check if current user is admin
-  const { data: isAdmin } = useQuery({
-    queryKey: ["is-admin"],
-    queryFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return false;
-      return isUserAdmin(supabase, u.user.id);
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  async function signOut() {
-    await qc.cancelQueries();
-    qc.clear();
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
-  }
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
@@ -96,37 +70,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
-          {isAdmin && (
-            <>
-              <div className="my-2 h-px bg-border" />
-              <Link
-                to="/admin"
-                onClick={() => setMobile(false)}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                  path.startsWith("/admin") ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                )}
-              >
-                <Settings className="h-4 w-4" />
-                Admin
-              </Link>
-            </>
-          )}
         </nav>
-        <div className="border-t border-border p-3 space-y-1">
+        <div className="border-t border-border p-3">
           <button
             onClick={toggle}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             {theme === "dark" ? "Light mode" : "Dark mode"}
-          </button>
-          <button
-            onClick={signOut}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign out
           </button>
         </div>
       </aside>
