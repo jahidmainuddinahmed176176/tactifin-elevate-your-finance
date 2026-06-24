@@ -1,15 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
   import { z } from "zod";
   import { allowPublicChat } from "@/integrations/supabase/public-middleware";
-  import { createGoogleGenerativeAI } from "@ai-sdk/google";
+  import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
   import { generateText } from "ai";
 
   const SYSTEM = `You are Tactifin AI, a helpful financial assistant specialising in personal finance, budgeting, Islamic finance, Shariah compliance, and tax questions.
   Be concise, accurate, and practical. For Islamic finance questions, reference Quran/Hadith where relevant.
   Respond in the same language as the user.`;
 
-  function createGeminiProvider(key: string) {
-    return createGoogleGenerativeAI({ apiKey: key });
+  function createGeminiProvider(apiKey: string) {
+    return createOpenAICompatible({
+      name: "google-gemini",
+      baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
+      apiKey,
+    });
   }
 
   export const sendChatMessage = createServerFn({ method: "POST" })
