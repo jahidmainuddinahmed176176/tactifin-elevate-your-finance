@@ -1,5 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
 
 export function Partners() {
   return (
@@ -18,8 +19,12 @@ export function Partners() {
                 early access to new modules, co-built integrations, and rewards for every client onboarded.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Button size="lg" className="rounded-full">Become a partner <ArrowUpRight className="ml-1 h-4 w-4" /></Button>
-                <Button size="lg" variant="ghost" className="rounded-full">Read the program</Button>
+                <Button size="lg" className="rounded-full" asChild>
+                  <Link to="/auth">Become a partner <ArrowUpRight className="ml-1 h-4 w-4" /></Link>
+                </Button>
+                <Button size="lg" variant="ghost" className="rounded-full" asChild>
+                  <Link to="/auth">Read the program</Link>
+                </Button>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
