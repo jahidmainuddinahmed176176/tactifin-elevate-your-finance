@@ -1,7 +1,6 @@
 import { ArrowRight, Sparkles } from "lucide-react";
   import { Button } from "@/components/ui/button";
   import { TactifinLogo } from "@/components/site/tactifin-logo";
-  import { Link } from "@tanstack/react-router";
 
   export function Hero() {
     return (
@@ -24,9 +23,9 @@ import { ArrowRight, Sparkles } from "lucide-react";
             </p>
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
               <Button size="lg" className="rounded-full px-8 btn-glow-idle" asChild>
-                <Link to="/app">
-                  Open the app <ArrowRight className="ml-1.5 h-4 w-4" />
-                </Link>
+                <a href="#app">
+                  Explore the workspace <ArrowRight className="ml-1.5 h-4 w-4" />
+                </a>
               </Button>
               <Button size="lg" variant="ghost" className="rounded-full px-8 border border-border/60 btn-glow" asChild>
                 <a href="#features">Explore the platform</a>
@@ -73,4 +72,3 @@ import { ArrowRight, Sparkles } from "lucide-react";
       </section>
     );
   }
-  
