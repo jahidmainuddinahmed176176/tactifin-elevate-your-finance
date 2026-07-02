@@ -2,14 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { getTransactions, addTransaction, updateTransaction, deleteTransaction } from "@/lib/local-storage";
-import type { Transaction } from "@/lib/local-storage";
+import type { Transaction, TxnType } from "@/lib/local-storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CATEGORIES, detectHaram } from "@/lib/haram";
+import { CATEGORIES, detectHaram, autoCategorize } from "@/lib/haram";
 import { toast } from "sonner";
 import { Trash2, Pencil } from "lucide-react";
 
@@ -20,14 +20,15 @@ export const Route = createFileRoute("/_authenticated/transactions")({
 
 function TransactionsPage() {
   const qc = useQueryClient();
-  const [type, setType] = useState<"income" | "expense">("expense");
+  const [type, setType] = useState<TxnType>("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<string>("Food");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [autoCat, setAutoCat] = useState(true);
 
   const [editTxn, setEditTxn] = useState<Transaction | null>(null);
-  const [editType, setEditType] = useState<"income" | "expense">("expense");
+  const [editType, setEditType] = useState<TxnType>("expense");
   const [editAmount, setEditAmount] = useState("");
   const [editCategory, setEditCategory] = useState("Food");
   const [editDescription, setEditDescription] = useState("");
@@ -40,8 +41,9 @@ function TransactionsPage() {
 
   const add = useMutation({
     mutationFn: () => {
-      const haram = detectHaram(`${category} ${description}`);
-      addTransaction({ type, amount: Number(amount), category, description, transaction_date: date, is_haram: haram.isHaram, haram_reason: haram.reason ?? null });
+      const finalCategory = autoCat && description.trim() ? autoCategorize(description) : category;
+      const haram = detectHaram(`${finalCategory} ${description}`);
+      addTransaction({ type, amount: Number(amount), category: finalCategory, description, transaction_date: date, is_haram: haram.isHaram, haram_reason: haram.reason ?? null });
       if (haram.isHaram) toast.warning(`Flagged: ${haram.reason}`);
       else toast.success("Transaction added");
     },
@@ -85,7 +87,7 @@ function TransactionsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl">Transactions</h1>
-        <p className="text-sm text-muted-foreground">Record income and expenses. Data saved to your device only.</p>
+        <p className="text-sm text-muted-foreground">Record income and expenses. Auto-categorization enabled.</p>
       </div>
 
       <Card>
@@ -94,7 +96,7 @@ function TransactionsPage() {
           <form onSubmit={(e) => { e.preventDefault(); add.mutate(); }} className="grid gap-4 md:grid-cols-6">
             <div className="md:col-span-1">
               <Label>Type</Label>
-              <Select value={type} onValueChange={(v) => setType(v as "income" | "expense")}>
+              <Select value={type} onValueChange={(v) => setType(v as TxnType)}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="expense">Expense</SelectItem>
@@ -106,23 +108,32 @@ function TransactionsPage() {
               <Label>Amount</Label>
               <Input className="mt-1" type="number" step="0.01" min="0" required value={amount} onChange={(e) => setAmount(e.target.value)} />
             </div>
-            <div className="md:col-span-1">
-              <Label>Category</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
             <div className="md:col-span-2">
               <Label>Description</Label>
               <Input className="mt-1" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. Grocery shopping" />
+              {autoCat && description.trim() && (
+                <p className="mt-1 text-xs text-[color:var(--brand-bolt)]">
+                  Auto-detected: {autoCategorize(description)}
+                </p>
+              )}
+            </div>
+            <div className="md:col-span-1">
+              <Label>Category {autoCat && <span className="text-xs text-muted-foreground">(auto)</span>}</Label>
+              <Select value={autoCat && description.trim() ? autoCategorize(description) : category} onValueChange={(v) => { setAutoCat(false); setCategory(v); }}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+              </Select>
             </div>
             <div className="md:col-span-1">
               <Label>Date</Label>
               <Input className="mt-1" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </div>
-            <div className="md:col-span-6">
+            <div className="md:col-span-6 flex items-center gap-4">
               <Button type="submit" disabled={add.isPending}>{add.isPending ? "Adding..." : "Add transaction"}</Button>
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <input type="checkbox" checked={autoCat} onChange={(e) => setAutoCat(e.target.checked)} className="rounded" />
+                Auto-categorize from description
+              </label>
             </div>
           </form>
         </CardContent>
@@ -168,7 +179,7 @@ function TransactionsPage() {
           <form onSubmit={(e) => { e.preventDefault(); edit.mutate(); }} className="grid gap-4 md:grid-cols-2">
             <div>
               <Label>Type</Label>
-              <Select value={editType} onValueChange={(v) => setEditType(v as "income" | "expense")}>
+              <Select value={editType} onValueChange={(v) => setEditType(v as TxnType)}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="expense">Expense</SelectItem>
