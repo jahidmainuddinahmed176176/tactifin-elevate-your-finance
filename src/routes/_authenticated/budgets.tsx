@@ -21,6 +21,7 @@ function BudgetsPage() {
   const qc = useQueryClient();
   const [category, setCategory] = useState<string>("Food");
   const [limit, setLimit] = useState("");
+  const [otherDesc, setOtherDesc] = useState("");
 
   const { data: budgets = [] } = useQuery({
     queryKey: ["budgets"],
@@ -37,16 +38,19 @@ function BudgetsPage() {
   const spentBy: Record<string, number> = {};
   for (const t of txns) {
     if (t.type !== "expense" || t.transaction_date < monthStart) continue;
-    spentBy[t.category] = (spentBy[t.category] ?? 0) + t.amount;
+    const key = t.category === "Other" && t.description ? `Other: ${t.description}` : t.category;
+    spentBy[key] = (spentBy[key] ?? 0) + t.amount;
   }
 
   const add = useMutation({
     mutationFn: () => {
-      upsertBudget(category, Number(limit));
+      const cat = category === "Other" && otherDesc.trim() ? `Other: ${otherDesc.trim()}` : category;
+      upsertBudget(cat, Number(limit));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["budgets"] });
       setLimit("");
+      setOtherDesc("");
       toast.success("Budget saved");
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
@@ -75,6 +79,12 @@ function BudgetsPage() {
                 <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+            {category === "Other" && (
+              <div>
+                <Label>Describe this category</Label>
+                <Input className="mt-1" required value={otherDesc} onChange={(e) => setOtherDesc(e.target.value)} placeholder="e.g. Gifts, Subscriptions" />
+              </div>
+            )}
             <div>
               <Label>Monthly limit</Label>
               <Input className="mt-1" type="number" min="1" step="0.01" required value={limit} onChange={(e) => setLimit(e.target.value)} />
