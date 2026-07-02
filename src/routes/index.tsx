@@ -9,6 +9,7 @@ import { Testimonials } from "@/components/site/testimonials";
 import { Partners } from "@/components/site/partners";
 import { FAQ } from "@/components/site/faq";
 import { SiteFooter } from "@/components/site/footer";
+import { AppDashboard } from "@/components/app/app-dashboard";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,6 +33,7 @@ function Index() {
           <FeaturesGrid />
           <AISection />
           <VideoGallery />
+          <AppDashboard />
           <Testimonials />
           <Partners />
           <FAQ />
