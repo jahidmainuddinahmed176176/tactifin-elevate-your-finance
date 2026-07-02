@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { detectHaram, HARAM_KEYWORDS } from "@/lib/haram";
 import { ShieldCheck, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/compliance")({
   head: () => ({ meta: [{ title: "Compliance — Tactifin" }] }),
@@ -40,7 +41,7 @@ function CompliancePage() {
           </div>
           <Button onClick={() => setResult(detectHaram(text))}>Check compliance</Button>
           {result && (
-            <div className={`flex items-center gap-2 rounded-lg border p-3 text-sm ${result.isHaram ? "border-amber-500/40 bg-amber-500/10 text-amber-500" : "border-emerald-500/40 bg-emerald-500/10 text-emerald-500"}`}>
+            <div className={cn("flex items-center gap-2 rounded-lg border p-3 text-sm", result.isHaram ? "border-amber-500/40 bg-amber-500/10 text-amber-500" : "border-emerald-500/40 bg-emerald-500/10 text-emerald-500")}>
               {result.isHaram ? <AlertTriangle className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
               {result.isHaram ? result.reason : "Looks Shariah-compliant"}
             </div>
@@ -50,19 +51,25 @@ function CompliancePage() {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Flagged transactions</CardTitle></CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-amber-500" /> Compliance notifications</CardTitle>
+          {flagged.length > 0 && <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs text-amber-500">{flagged.length} flagged</span>}
+        </CardHeader>
         <CardContent>
           {flagged.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nothing flagged. Looking good.</p>
+            <div className="flex items-center gap-2 text-sm text-emerald-500"><ShieldCheck className="h-4 w-4" /> No compliance issues detected. All clear.</div>
           ) : (
-            <div className="divide-y divide-border">
+            <div className="space-y-3">
               {flagged.map((t) => (
-                <div key={t.id} className="flex items-center justify-between py-3">
-                  <div>
-                    <div className="font-medium">{t.description || t.category}</div>
-                    <div className="text-xs text-amber-500">⚠ {t.haram_reason}</div>
+                <div key={t.id} className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500/20">
+                    <AlertTriangle className="h-4 w-4 text-amber-500" />
                   </div>
-                  <div className="text-sm text-muted-foreground">${t.amount.toFixed(2)}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium">{t.description || t.category}</div>
+                    <div className="text-xs text-amber-500 mt-0.5">{t.haram_reason}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{t.category} · {t.transaction_date} · ${t.amount.toFixed(2)}</div>
+                  </div>
                 </div>
               ))}
             </div>
