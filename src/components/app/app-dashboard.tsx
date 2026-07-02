@@ -1,4 +1,4 @@
-import { useState, useMemo, type ReactNode } from "react";
+import { useState, useMemo, useRef, useEffect, type ReactNode } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getTransactions, addTransaction, updateTransaction, deleteTransaction,
@@ -19,7 +19,8 @@ import { toast } from "sonner";
 import {
   LayoutDashboard, Receipt, Target, Wallet, CreditCard, Calculator,
   ShieldCheck, Bot, RotateCcw, Trash2, Pencil, TrendingUp, TrendingDown,
-  AlertTriangle, Sparkles, Newspaper, BookOpen,
+  AlertTriangle, Sparkles, Newspaper, BookOpen, Send, User,
+  ExternalLink, Lightbulb, Clock, ArrowRight,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -79,7 +80,6 @@ export function AppDashboard() {
         </div>
 
         <div className="rounded-2xl border border-border/60 bg-card/40 shadow-elegant backdrop-blur-xl overflow-hidden">
-          {/* Tab bar */}
           <div className="flex gap-1 overflow-x-auto border-b border-border bg-background/50 p-2">
             {TABS.map((t) => (
               <button
@@ -98,7 +98,6 @@ export function AppDashboard() {
             ))}
           </div>
 
-          {/* Tab content */}
           <div className="p-4 md:p-8 min-h-[500px]">
             {tab === "dashboard" && <DashboardPanel />}
             {tab === "transactions" && <TransactionsPanel />}
@@ -756,7 +755,7 @@ function CalculatorsPanel() {
 
   const totalAssets = (Number(zakatSavings) || 0) + (Number(zakatGold) || 0) + (Number(zakatSilver) || 0) + (Number(zakatInvestments) || 0);
   const netAssets = totalAssets - (Number(zakatDebts) || 0);
-  const nisab = 612.36; // silver nisab approx in USD
+  const nisab = 612.36;
   const zakatDue = netAssets >= nisab ? netAssets * 0.025 : 0;
 
   return (
@@ -852,56 +851,211 @@ function CompliancePanel() {
   );
 }
 
-/* ── Chat (placeholder) ── */
+/* ── AI Assistant (Gemini-powered) ── */
+type ChatMsg = { role: "user" | "assistant"; content: string };
+
 function ChatPanel() {
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  async function send(e: React.FormEvent) {
+    e.preventDefault();
+    if (!input.trim() || loading) return;
+    const userMsg: ChatMsg = { role: "user", content: input.trim() };
+    setMessages((m) => [...m, userMsg]);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      const apiUrl = import.meta.env.VITE_AI_API_URL;
+      const url = (apiUrl ?? "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=") + (apiKey ?? "");
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            ...messages.map((m) => ({ role: m.role, parts: [{ text: m.content }] })),
+            { role: "user", parts: [{ text: userMsg.content }] },
+          ],
+          systemInstruction: { parts: [{ text: "You are Tactifin's AI financial assistant. You help with budgeting, Zakat, Islamic finance, expense tracking, and general financial questions. Keep answers concise and helpful." }] },
+        }),
+      });
+
+      if (!res.ok) throw new Error("AI request failed");
+      const data = await res.json();
+      const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "Sorry, I could not generate a response.";
+      setMessages((m) => [...m, { role: "assistant", content: reply }]);
+    } catch {
+      setMessages((m) => [...m, { role: "assistant", content: "Sorry, the AI assistant is temporarily unavailable. Please try again later." }]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <h3 className="text-2xl">AI Assistant</h3>
-        <p className="text-sm text-muted-foreground">Ask questions about your finances.</p>
+        <p className="text-sm text-muted-foreground">Ask about budgeting, Zakat, taxes, or whether a transaction is Shariah-compliant.</p>
       </div>
-      <Card>
-        <CardContent className="py-12 text-center">
-          <Bot className="mx-auto h-12 w-12 text-muted-foreground" />
-          <p className="mt-4 text-sm text-muted-foreground">AI assistant is available in the full app view.</p>
-        </CardContent>
+      <Card className="overflow-hidden">
+        <div className="flex flex-col h-[420px]">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {messages.length === 0 && !loading && (
+              <div className="flex flex-col items-center gap-3 pt-12 text-center text-muted-foreground">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-gradient">
+                  <Bot className="h-6 w-6 text-white" />
+                </div>
+                <p className="text-sm max-w-xs">Ask me anything about your finances — budgeting tips, Zakat calculations, or Shariah compliance questions.</p>
+                <div className="flex flex-wrap gap-2 justify-center mt-2">
+                  {["How do I calculate Zakat?", "Tips for saving money", "Is interest haram?", "How to budget effectively"].map((s) => (
+                    <button key={s} onClick={() => setInput(s)} className="rounded-full border border-border/60 bg-card px-3 py-1.5 text-xs text-muted-foreground hover:border-[color:var(--brand-bolt)]/40 hover:text-foreground transition-colors">
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {messages.map((m, i) => (
+              <div key={i} className={cn("flex gap-2", m.role === "user" ? "justify-end" : "justify-start")}>
+                {m.role !== "user" && (
+                  <div className="h-7 w-7 shrink-0 rounded-full bg-brand-gradient flex items-center justify-center text-white">
+                    <Bot className="h-3.5 w-3.5" />
+                  </div>
+                )}
+                <div className={cn(
+                  "rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words max-w-[75%]",
+                  m.role === "user" ? "bg-primary text-primary-foreground rounded-br-none" : "bg-accent text-foreground rounded-bl-none",
+                )}>
+                  {m.content}
+                </div>
+                {m.role === "user" && (
+                  <div className="h-7 w-7 shrink-0 rounded-full bg-muted flex items-center justify-center">
+                    <User className="h-3.5 w-3.5" />
+                  </div>
+                )}
+              </div>
+            ))}
+            {loading && (
+              <div className="flex gap-2">
+                <div className="h-7 w-7 shrink-0 rounded-full bg-brand-gradient flex items-center justify-center text-white">
+                  <Bot className="h-3.5 w-3.5" />
+                </div>
+                <div className="rounded-2xl bg-accent px-3 py-2 text-sm text-muted-foreground rounded-bl-none">Thinking…</div>
+              </div>
+            )}
+            <div ref={bottomRef} />
+          </div>
+          <form onSubmit={send} className="border-t border-border p-3 flex items-end gap-2 bg-background shrink-0">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(e); } }}
+              placeholder="Ask AI..."
+              rows={1}
+              className="flex-1 min-w-0 resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            <Button type="submit" disabled={loading || !input.trim()} size="icon" className="shrink-0 h-9 w-9">
+              <Send className="h-4 w-4" />
+            </Button>
+          </form>
+        </div>
       </Card>
     </div>
   );
 }
 
-/* ── News (placeholder) ── */
+/* ── Tips & News ── */
+const TIPS = [
+  { icon: Lightbulb, title: "The 50/30/20 Rule", category: "Budgeting", readTime: "3 min", content: "Allocate 50% of your income to needs, 30% to wants, and 20% to savings and debt repayment. This simple framework keeps spending balanced without requiring complex spreadsheets." },
+  { icon: ShieldCheck, title: "Understanding Zakat", category: "Islamic Finance", readTime: "5 min", content: "Zakat is 2.5% of your qualifying wealth above the nisab threshold, paid annually. It applies to cash, gold, silver, and investments. Use the Zakat Calculator tab to calculate yours." },
+  { icon: TrendingUp, title: "Building an Emergency Fund", category: "Savings", readTime: "4 min", content: "Aim for 3-6 months of living expenses in an easily accessible account. Start small — even $500 can prevent a financial crisis. Automate transfers to stay consistent." },
+  { icon: AlertTriangle, title: "Avoiding Riba (Interest)", category: "Islamic Finance", readTime: "3 min", content: "Interest is prohibited in Islam. Avoid conventional mortgages, interest-bearing accounts, and credit card debt. Look for Shariah-compliant alternatives like Murabaha or Ijara." },
+  { icon: Target, title: "SMART Financial Goals", category: "Planning", readTime: "4 min", content: "Make goals Specific, Measurable, Achievable, Relevant, and Time-bound. Instead of 'save money,' try 'save $5,000 for Hajj by December 2026.' Use the Goals tab to track progress." },
+  { icon: CreditCard, title: "Bill Management Tips", category: "Organization", readTime: "3 min", content: "Set up autopay for fixed bills to avoid late fees. Review variable bills monthly. Use the Bill Pay tab to track due dates and never miss a payment." },
+];
+
 function NewsPanel() {
   return (
     <div className="space-y-6">
       <div>
         <h3 className="text-2xl">Tips & News</h3>
-        <p className="text-sm text-muted-foreground">Financial tips and market news.</p>
+        <p className="text-sm text-muted-foreground">Financial tips and guidance to help you make better decisions.</p>
       </div>
-      <Card>
-        <CardContent className="py-12 text-center">
-          <Newspaper className="mx-auto h-12 w-12 text-muted-foreground" />
-          <p className="mt-4 text-sm text-muted-foreground">Tips and news are available in the full app view.</p>
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 md:grid-cols-2">
+        {TIPS.map((tip) => (
+          <Card key={tip.title} className="group hover:border-[color:var(--brand-bolt)]/40 transition-colors">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--brand-bolt)]/10">
+                  <tip.icon className="h-5 w-5 text-[color:var(--brand-bolt)]" />
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" /> {tip.readTime}
+                </div>
+              </div>
+              <CardTitle className="mt-3 text-lg">{tip.title}</CardTitle>
+              <div className="text-xs text-[color:var(--brand-bolt)]">{tip.category}</div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">{tip.content}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
 
-/* ── Learn (placeholder) ── */
+/* ── Learning ── */
+const COURSES = [
+  { icon: BookOpen, title: "Islamic Finance Fundamentals", lessons: 8, level: "Beginner", description: "Learn the core principles of Shariah-compliant finance — from Zakat to halal investing and avoiding riba." },
+  { icon: Wallet, title: "Personal Budgeting 101", lessons: 6, level: "Beginner", description: "Master the basics of income tracking, expense categorization, and building a budget that actually works." },
+  { icon: TrendingUp, title: "Investing for Beginners", lessons: 10, level: "Intermediate", description: "Understand stocks, bonds, ETFs, and halal investment options. Learn portfolio diversification and risk management." },
+  { icon: Target, title: "Goal-Based Savings", lessons: 5, level: "Beginner", description: "Set meaningful financial goals and build a savings plan to reach them. Includes emergency funds, Hajj, and retirement planning." },
+  { icon: ShieldCheck, title: "Islamic Compliance in Daily Finance", lessons: 7, level: "Intermediate", description: "Practical guidance on keeping your daily financial life Shariah-compliant — banking, insurance, and business transactions." },
+  { icon: Calculator, title: "Zakat & Tax Calculations", lessons: 4, level: "Beginner", description: "Step-by-step guides to calculating Zakat on various asset types and understanding your tax obligations." },
+];
+
 function LearnPanel() {
   return (
     <div className="space-y-6">
       <div>
         <h3 className="text-2xl">Learning</h3>
-        <p className="text-sm text-muted-foreground">Courses and educational content.</p>
+        <p className="text-sm text-muted-foreground">Financial literacy courses to grow your knowledge at your own pace.</p>
       </div>
-      <Card>
-        <CardContent className="py-12 text-center">
-          <BookOpen className="mx-auto h-12 w-12 text-muted-foreground" />
-          <p className="mt-4 text-sm text-muted-foreground">Learning content is available in the full app view.</p>
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {COURSES.map((course) => (
+          <Card key={course.title} className="group hover:border-[color:var(--brand-bolt)]/40 transition-colors cursor-pointer">
+            <CardHeader>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--brand-bolt)]/10">
+                <course.icon className="h-5 w-5 text-[color:var(--brand-bolt)]" />
+              </div>
+              <CardTitle className="mt-3 text-base">{course.title}</CardTitle>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span>{course.lessons} lessons</span>
+                <span>·</span>
+                <span>{course.level}</span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">{course.description}</p>
+              <div className="mt-4 flex items-center gap-1 text-sm text-[color:var(--brand-bolt)] group-hover:gap-2 transition-all">
+                Start learning <ArrowRight className="h-3.5 w-3.5" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
