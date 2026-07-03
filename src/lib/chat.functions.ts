@@ -3,7 +3,7 @@ import { z } from "zod";
 import { allowPublicChat } from "@/integrations/supabase/public-middleware";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { generateText } from "ai";
-import { createClient } from "@/integrations/supabase/client.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const SYSTEM = `You are Tactifin AI, a helpful financial assistant specialising in personal finance, budgeting, Islamic finance, Shariah compliance, and tax questions.
 Be concise, accurate, and practical. For Islamic finance questions, reference Quran/Hadith where relevant.
@@ -26,9 +26,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data }) => {
-    // 🔥 CRITICAL FIX: Create a fresh Supabase client for EVERY request.
-    const supabase = createClient();
-    let gemini;
+    const supabase = supabaseAdmin;
 
     try {
       const key = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY ?? process.env.VITE_GEMINI_API_KEY;
@@ -49,7 +47,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         .order("created_at", { ascending: true });
       if (e2) throw new Error(e2.message);
 
-      gemini = createGeminiProvider(key);
+      const gemini = createGeminiProvider(key);
       const result = await generateText({
         model: gemini("gemini-2.5-flash"),
         system: SYSTEM,
