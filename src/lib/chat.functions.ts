@@ -1,30 +1,31 @@
 import { createServerFn } from "@tanstack/react-start";
-  import { z } from "zod";
-  import { allowPublicChat } from "@/integrations/supabase/public-middleware";
-  import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-  import { generateText } from "ai";
+import { z } from "zod";
+import { allowPublicChat } from "@/integrations/supabase/public-middleware";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { generateText } from "ai";
 
-  const SYSTEM = `You are Tactifin AI, a helpful financial assistant specialising in personal finance, budgeting, Islamic finance, Shariah compliance, and tax questions.
-  Be concise, accurate, and practical. For Islamic finance questions, reference Quran/Hadith where relevant.
-  Respond in the same language as the user.`;
+const SYSTEM = `You are Tactifin AI, a helpful financial assistant specialising in personal finance, budgeting, Islamic finance, Shariah compliance, and tax questions.
+Be concise, accurate, and practical. For Islamic finance questions, reference Quran/Hadith where relevant.
+Respond in the same language as the user.`;
 
-  function createGeminiProvider(apiKey: string) {
-    return createOpenAICompatible({
-      name: "google-gemini",
-      baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
-      apiKey,
-    });
-  }
+function createGeminiProvider(apiKey: string) {
+  return createOpenAICompatible({
+    name: "google-gemini",
+    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
+    apiKey,
+  });
+}
 
-  export const sendChatMessage = createServerFn({ method: "POST" })
-    .middleware([allowPublicChat])
-    .validator((d: unknown) =>
-      z.object({
-        threadId: z.string().uuid(),
-        content: z.string().min(1).max(4000),
-      }).parse(d),
-    )
-    .handler(async ({ context, data }) => {
+export const sendChatMessage = createServerFn({ method: "POST" })
+  .middleware([allowPublicChat])
+  .validator((d: unknown) =>
+    z.object({
+      threadId: z.string().uuid(),
+      content: z.string().min(1).max(4000),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    try {
       const key = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY ?? process.env.VITE_GEMINI_API_KEY;
       if (!key) throw new Error("Missing GEMINI_API_KEY");
 
@@ -74,8 +75,12 @@ import { createServerFn } from "@tanstack/react-start";
         .eq("id", data.threadId);
 
       return { assistant: assistantText };
-    });
 
-  // Alias for backward compatibility
-  export const sendPublicChatMessage = sendChatMessage;
-  
+    } catch (error) {
+      console.error("Chat error:", error);
+      return { assistant: "Sorry, I'm having trouble responding right now. Please try again." };
+    }
+  });
+
+// Alias for backward compatibility
+export const sendPublicChatMessage = sendChatMessage;
