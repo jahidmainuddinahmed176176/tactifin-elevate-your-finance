@@ -25,6 +25,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ context, data }) => {
+    let gemini;
     try {
       const key = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY ?? process.env.VITE_GEMINI_API_KEY;
       if (!key) throw new Error("Missing GEMINI_API_KEY");
@@ -44,7 +45,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         .order("created_at", { ascending: true });
       if (e2) throw new Error(e2.message);
 
-      const gemini = createGeminiProvider(key);
+      gemini = createGeminiProvider(key);
       const result = await generateText({
         model: gemini("gemini-2.5-flash"),
         system: SYSTEM,
@@ -74,10 +75,19 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         .update({ updated_at: new Date().toISOString() })
         .eq("id", data.threadId);
 
+      // Reset the connection to prevent it from staying open
+      if (gemini && typeof gemini.reset === "function") {
+        gemini.reset();
+      }
+
       return { assistant: assistantText };
 
     } catch (error) {
       console.error("Chat error:", error);
+      // Reset connection on error too
+      if (gemini && typeof gemini.reset === "function") {
+        gemini.reset();
+      }
       return { assistant: "Sorry, I'm having trouble responding right now. Please try again." };
     }
   });
