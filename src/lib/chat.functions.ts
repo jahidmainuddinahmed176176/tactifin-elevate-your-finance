@@ -45,7 +45,7 @@ import { createServerFn } from "@tanstack/react-start";
 
       const gemini = createGeminiProvider(key);
       const result = await generateText({
-        model: gemini("gemini-1.5-flash"),
+        model: gemini("gemini-2.5-flash"),
         system: SYSTEM,
         messages: (history ?? []).map((m) => ({
           role: m.role as "user" | "assistant" | "system",
