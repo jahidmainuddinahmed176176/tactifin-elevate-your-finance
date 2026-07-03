@@ -30,23 +30,35 @@ export const sendChatMessage = createServerFn({ method: "POST" })
 
     try {
       const key = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY ?? process.env.VITE_GEMINI_API_KEY;
-      if (!key) throw new Error("Missing GEMINI_API_KEY");
+      if (!key) {
+        console.error("[Tactifin AI] Missing API key. Checked: GEMINI_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, VITE_GEMINI_API_KEY");
+        throw new Error("Missing GEMINI_API_KEY");
+      }
 
+      console.log("[Tactifin AI] Inserting user message to database...");
       const { error: e1 } = await supabase.from("ai_messages").insert({
         thread_id: data.threadId,
         user_id: null,
         role: "user",
         content: data.content,
       });
-      if (e1) throw new Error(e1.message);
+      if (e1) {
+        console.error("[Tactifin AI] Error inserting user message:", e1.message);
+        throw new Error(e1.message);
+      }
 
+      console.log("[Tactifin AI] Fetching message history...");
       const { data: history, error: e2 } = await supabase
         .from("ai_messages")
         .select("role,content")
         .eq("thread_id", data.threadId)
         .order("created_at", { ascending: true });
-      if (e2) throw new Error(e2.message);
+      if (e2) {
+        console.error("[Tactifin AI] Error fetching history:", e2.message);
+        throw new Error(e2.message);
+      }
 
+      console.log("[Tactifin AI] Calling Gemini API...");
       const gemini = createGeminiProvider(key);
       const result = await generateText({
         model: gemini("gemini-2.5-flash"),
@@ -57,6 +69,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         })),
       });
 
+      console.log("[Tactifin AI] Got response from Gemini, saving to database...");
       const assistantText = result.text;
       const { error: e3 } = await supabase.from("ai_messages").insert({
         thread_id: data.threadId,
@@ -64,8 +77,12 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         role: "assistant",
         content: assistantText,
       });
-      if (e3) throw new Error(e3.message);
+      if (e3) {
+        console.error("[Tactifin AI] Error inserting assistant message:", e3.message);
+        throw new Error(e3.message);
+      }
 
+      console.log("[Tactifin AI] Updating thread metadata...");
       const title = data.content.slice(0, 60);
       await supabase
         .from("ai_threads")
@@ -77,10 +94,13 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         .update({ updated_at: new Date().toISOString() })
         .eq("id", data.threadId);
 
+      console.log("[Tactifin AI] Chat completed successfully");
       return { assistant: assistantText };
 
     } catch (error) {
-      console.error("Chat error:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("[Tactifin AI] Chat handler error:", errorMessage);
+      console.error("[Tactifin AI] Full error:", error);
       return { assistant: "Sorry, I'm having trouble responding right now. Please try again." };
     }
   });
