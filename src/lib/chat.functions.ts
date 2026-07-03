@@ -21,7 +21,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
   .middleware([allowPublicChat])
   .validator((d: unknown) =>
     z.object({
-      threadId: z.string().uuid(),
+      threadId: z.string().min(1),  // Accept any non-empty string as threadId
       content: z.string().min(1).max(4000),
     }).parse(d),
   )
