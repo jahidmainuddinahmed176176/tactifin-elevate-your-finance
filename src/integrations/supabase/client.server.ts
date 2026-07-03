@@ -2,6 +2,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
+let _supabaseAdmin: ReturnType<typeof createClient<Database>> | null = null;
+
 function createSupabaseAdminClient() {
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
@@ -25,4 +27,11 @@ function createSupabaseAdminClient() {
   });
 }
 
-export const supabaseAdmin = createSupabaseAdminClient();
+export const supabaseAdmin = new Proxy({} as ReturnType<typeof createClient<Database>>, {
+  get(_, prop, receiver) {
+    if (!_supabaseAdmin) {
+      _supabaseAdmin = createSupabaseAdminClient();
+    }
+    return Reflect.get(_supabaseAdmin, prop, receiver);
+  },
+});
