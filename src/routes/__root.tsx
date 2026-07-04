@@ -11,7 +11,6 @@ import { type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { ThemeProvider } from "@/components/site/theme-provider";
-import { FloatingChatButton } from "@/components/site/floating-chat-button";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -121,7 +120,6 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <Outlet />
-        <FloatingChatButton />
         <Toaster />
       </ThemeProvider>
     </QueryClientProvider>
