@@ -47,11 +47,15 @@ export const sendPublicChatMessage = createServerFn({ method: "POST" })
         { role: "user", parts: [{ text: data.content }] },
       ];
 
+      // Use x-goog-api-key header — works correctly with both AIza and AQ. key formats
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": key,
+          },
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: SYSTEM }] },
             contents,
@@ -61,7 +65,7 @@ export const sendPublicChatMessage = createServerFn({ method: "POST" })
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error("[Tactifin AI] Gemini API error:", errorData);
+        console.error("[Tactifin AI] Gemini API error:", JSON.stringify(errorData));
         throw new Error(`Gemini API error: ${errorData?.error?.message ?? response.statusText}`);
       }
 
@@ -122,10 +126,13 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       }));
 
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": key,
+          },
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: SYSTEM }] },
             contents,
