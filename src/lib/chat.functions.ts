@@ -60,13 +60,20 @@ export const sendChatMessage = createServerFn({ method: "POST" })
 
       console.log("[Tactifin AI] Calling Gemini API...");
       const gemini = createGeminiProvider(key);
+      
+      // Convert assistant role to user for Gemini API compatibility
+      // Gemini API only accepts "user" and "assistant" roles
+      const messages = (history ?? []).map((m) => ({
+        role: m.role === "assistant" ? "user" : (m.role as "user" | "assistant"),
+        content: m.content,
+      }));
+      
+      console.log("[Tactifin AI] Messages to send to Gemini:", JSON.stringify(messages));
+      
       const result = await generateText({
         model: gemini("gemini-2.5-flash"),
         system: SYSTEM,
-        messages: (history ?? []).map((m) => ({
-          role: m.role as "user" | "assistant" | "system",
-          content: m.content,
-        })),
+        messages,
       });
 
       console.log("[Tactifin AI] Got response from Gemini, saving to database...");
