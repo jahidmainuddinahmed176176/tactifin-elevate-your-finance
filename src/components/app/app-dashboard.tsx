@@ -1017,15 +1017,190 @@ function NewsPanel() {
 
 /* ── Learning ── */
 const COURSES = [
-  { icon: BookOpen, title: "Islamic Finance Fundamentals", lessons: 8, level: "Beginner", description: "Learn the core principles of Shariah-compliant finance — from Zakat to halal investing and avoiding riba." },
-  { icon: Wallet, title: "Personal Budgeting 101", lessons: 6, level: "Beginner", description: "Master the basics of income tracking, expense categorization, and building a budget that actually works." },
-  { icon: TrendingUp, title: "Investing for Beginners", lessons: 10, level: "Intermediate", description: "Understand stocks, bonds, ETFs, and halal investment options. Learn portfolio diversification and risk management." },
-  { icon: Target, title: "Goal-Based Savings", lessons: 5, level: "Beginner", description: "Set meaningful financial goals and build a savings plan to reach them. Includes emergency funds, Hajj, and retirement planning." },
-  { icon: ShieldCheck, title: "Islamic Compliance in Daily Finance", lessons: 7, level: "Intermediate", description: "Practical guidance on keeping your daily financial life Shariah-compliant — banking, insurance, and business transactions." },
-  { icon: Calculator, title: "Zakat & Tax Calculations", lessons: 4, level: "Beginner", description: "Step-by-step guides to calculating Zakat on various asset types and understanding your tax obligations." },
+  {
+    icon: BookOpen, title: "Islamic Finance Fundamentals", lessons: 8, level: "Beginner", duration: "64 min",
+    description: "Learn the core principles of Shariah-compliant finance — from Zakat to halal investing and avoiding riba.",
+    whatYouLearn: [
+      "Understand the prohibition of Riba (interest) and its alternatives",
+      "Calculate Zakat on savings, gold, investments, and business assets",
+      "Distinguish between Halal and Haram investment instruments",
+      "Understand Sukuk, Murabaha, and Musharakah structures",
+    ],
+    lessonList: [
+      { title: "What is Shariah-compliant finance?", duration: "8 min" },
+      { title: "Riba explained — why interest is prohibited", duration: "10 min" },
+      { title: "Calculating Zakat step by step", duration: "10 min" },
+      { title: "Halal vs Haram investments", duration: "9 min" },
+      { title: "Sukuk: Islamic bonds", duration: "8 min" },
+      { title: "Islamic mortgages (Murabaha)", duration: "8 min" },
+      { title: "Musharakah & profit-sharing contracts", duration: "7 min" },
+      { title: "Using Tactifin's compliance checker", duration: "4 min" },
+    ],
+  },
+  {
+    icon: Wallet, title: "Personal Budgeting 101", lessons: 6, level: "Beginner", duration: "45 min",
+    description: "Master the basics of income tracking, expense categorization, and building a budget that actually works.",
+    whatYouLearn: [
+      "Apply the 50/30/20 rule to your own income",
+      "Categorize expenses automatically and spot leaks",
+      "Set up an emergency fund from scratch",
+      "Automate savings so they happen without willpower",
+    ],
+    lessonList: [
+      { title: "Why budgeting matters", duration: "5 min" },
+      { title: "The 50/30/20 rule", duration: "7 min" },
+      { title: "Setting up an emergency fund", duration: "8 min" },
+      { title: "Understanding debt types", duration: "10 min" },
+      { title: "Credit cards: friend or foe?", duration: "8 min" },
+      { title: "Automating your finances", duration: "7 min" },
+    ],
+  },
+  {
+    icon: TrendingUp, title: "Investing for Beginners", lessons: 10, level: "Intermediate", duration: "88 min",
+    description: "Understand stocks, bonds, ETFs, and halal investment options. Learn portfolio diversification and risk management.",
+    whatYouLearn: [
+      "Understand the difference between stocks, bonds, and ETFs",
+      "Build a diversified halal portfolio from any starting amount",
+      "Use dollar-cost averaging to reduce timing risk",
+      "Identify and avoid common investing mistakes",
+    ],
+    lessonList: [
+      { title: "Why invest at all?", duration: "6 min" },
+      { title: "Risk vs return explained", duration: "9 min" },
+      { title: "Index funds vs active funds", duration: "10 min" },
+      { title: "Dollar-cost averaging", duration: "8 min" },
+      { title: "Building a diversified portfolio", duration: "12 min" },
+      { title: "Halal ETFs and screened stocks", duration: "10 min" },
+      { title: "Reading a company's financials", duration: "9 min" },
+      { title: "Understanding market cycles", duration: "8 min" },
+      { title: "Tax-efficient investing", duration: "9 min" },
+      { title: "Common investing mistakes", duration: "7 min" },
+    ],
+  },
+  {
+    icon: Target, title: "Goal-Based Savings", lessons: 5, level: "Beginner", duration: "40 min",
+    description: "Set meaningful financial goals and build a savings plan to reach them. Includes emergency funds, Hajj, and retirement planning.",
+    whatYouLearn: [
+      "Define short, medium and long-term financial goals",
+      "Calculate how much to save monthly for each goal",
+      "Use high-yield accounts and saving buckets effectively",
+      "Plan specifically for Hajj, home purchase, and retirement",
+    ],
+    lessonList: [
+      { title: "Defining your financial goals", duration: "7 min" },
+      { title: "Short, medium and long-term buckets", duration: "8 min" },
+      { title: "High-yield savings accounts", duration: "8 min" },
+      { title: "Saving for Hajj and big milestones", duration: "9 min" },
+      { title: "Retirement planning basics", duration: "8 min" },
+    ],
+  },
+  {
+    icon: ShieldCheck, title: "Islamic Compliance in Daily Finance", lessons: 7, level: "Intermediate", duration: "56 min",
+    description: "Practical guidance on keeping your daily financial life Shariah-compliant — banking, insurance, and business transactions.",
+    whatYouLearn: [
+      "Choose Shariah-compliant bank accounts and credit products",
+      "Understand Takaful (Islamic insurance) vs conventional insurance",
+      "Screen business transactions for compliance red flags",
+      "Handle grey-area cases with confidence",
+    ],
+    lessonList: [
+      { title: "Shariah-compliant banking options", duration: "9 min" },
+      { title: "Takaful vs conventional insurance", duration: "8 min" },
+      { title: "Business transactions and partnerships", duration: "9 min" },
+      { title: "Screening stocks for Shariah compliance", duration: "8 min" },
+      { title: "Handling interest income (purification)", duration: "7 min" },
+      { title: "Crypto and digital assets — halal or haram?", duration: "8 min" },
+      { title: "Practical grey-area guide", duration: "7 min" },
+    ],
+  },
+  {
+    icon: Calculator, title: "Zakat & Tax Calculations", lessons: 4, level: "Beginner", duration: "32 min",
+    description: "Step-by-step guides to calculating Zakat on various asset types and understanding your tax obligations.",
+    whatYouLearn: [
+      "Calculate Zakat on cash, gold, silver, investments, and business assets",
+      "Understand the nisab threshold and lunar year",
+      "Know which income deductions reduce your tax bill",
+      "Understand tax brackets and how progressive tax works",
+    ],
+    lessonList: [
+      { title: "Zakat on cash, savings and gold", duration: "9 min" },
+      { title: "Zakat on investments and business", duration: "8 min" },
+      { title: "Understanding tax brackets", duration: "8 min" },
+      { title: "Deductions that reduce your tax bill", duration: "7 min" },
+    ],
+  },
 ];
 
+type Course = typeof COURSES[0];
+
+function CourseModal({ course, onClose }: { course: Course; onClose: () => void }) {
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[color:var(--brand-bolt)]/10">
+              <course.icon className="h-5 w-5 text-[color:var(--brand-bolt)]" />
+            </div>
+            <div>
+              <DialogTitle className="text-lg leading-snug">{course.title}</DialogTitle>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                <span>{course.lessons} lessons</span>
+                <span>·</span>
+                <span>{course.duration}</span>
+                <span>·</span>
+                <span className="rounded-full border border-border px-1.5 py-0.5">{course.level}</span>
+              </div>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <p className="text-sm text-muted-foreground">{course.description}</p>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">What you'll learn</p>
+          <ul className="space-y-1.5">
+            {course.whatYouLearn.map((item) => (
+              <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <span className="mt-0.5 h-4 w-4 shrink-0 rounded-full bg-[color:var(--brand-bolt)]/15 flex items-center justify-center">
+                  <span className="block h-1.5 w-1.5 rounded-full bg-[color:var(--brand-bolt)]" />
+                </span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Course lessons</p>
+          <div className="space-y-1">
+            {course.lessonList.map((lesson, i) => (
+              <div key={i} className="flex items-center justify-between rounded-lg border border-border/60 bg-card px-3 py-2">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-bolt)]/10 text-[10px] font-medium text-[color:var(--brand-bolt)]">{i + 1}</span>
+                  <span className="text-sm">{lesson.title}</span>
+                </div>
+                <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0 ml-2">
+                  <Clock className="h-3 w-3" />{lesson.duration}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button className="w-full" onClick={onClose}>
+            <ArrowRight className="mr-2 h-4 w-4" /> Sign in to start learning
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function LearnPanel() {
+  const [activeCourse, setActiveCourse] = useState<Course | null>(null);
+
   return (
     <div className="space-y-6">
       <div>
@@ -1034,7 +1209,11 @@ function LearnPanel() {
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {COURSES.map((course) => (
-          <Card key={course.title} className="group hover:border-[color:var(--brand-bolt)]/40 transition-colors cursor-pointer">
+          <Card
+            key={course.title}
+            className="group hover:border-[color:var(--brand-bolt)]/40 transition-colors cursor-pointer"
+            onClick={() => setActiveCourse(course)}
+          >
             <CardHeader>
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--brand-bolt)]/10">
                 <course.icon className="h-5 w-5 text-[color:var(--brand-bolt)]" />
@@ -1055,6 +1234,8 @@ function LearnPanel() {
           </Card>
         ))}
       </div>
+
+      {activeCourse && <CourseModal course={activeCourse} onClose={() => setActiveCourse(null)} />}
     </div>
   );
 }
