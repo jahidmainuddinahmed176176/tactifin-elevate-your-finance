@@ -1018,115 +1018,199 @@ function NewsPanel() {
 /* ── Learning ── */
 const COURSES = [
   {
-    icon: BookOpen, title: "Islamic Finance Fundamentals", lessons: 8, level: "Beginner", duration: "64 min",
+    icon: BookOpen,
+    title: "Islamic Finance Fundamentals",
+    lessons: 8, level: "Beginner",
     description: "Learn the core principles of Shariah-compliant finance — from Zakat to halal investing and avoiding riba.",
-    whatYouLearn: [
-      "Understand the prohibition of Riba (interest) and its alternatives",
-      "Calculate Zakat on savings, gold, investments, and business assets",
-      "Distinguish between Halal and Haram investment instruments",
-      "Understand Sukuk, Murabaha, and Musharakah structures",
-    ],
-    lessonList: [
-      { title: "What is Shariah-compliant finance?", duration: "8 min" },
-      { title: "Riba explained — why interest is prohibited", duration: "10 min" },
-      { title: "Calculating Zakat step by step", duration: "10 min" },
-      { title: "Halal vs Haram investments", duration: "9 min" },
-      { title: "Sukuk: Islamic bonds", duration: "8 min" },
-      { title: "Islamic mortgages (Murabaha)", duration: "8 min" },
-      { title: "Musharakah & profit-sharing contracts", duration: "7 min" },
-      { title: "Using Tactifin's compliance checker", duration: "4 min" },
+    content: [
+      {
+        heading: "What is Shariah-compliant finance?",
+        body: "Shariah-compliant finance just means handling money in a way that follows Islamic law. The big rules are: no interest (called Riba), no investing in businesses that harm people (like alcohol, gambling, or weapons), and no extreme uncertainty in contracts. Think of it as ethical finance with a spiritual foundation.",
+      },
+      {
+        heading: "Why is interest (Riba) forbidden?",
+        body: "In Islam, money on its own shouldn't grow — only real work and trade should create wealth. When a bank charges you interest, you're paying for the passage of time, not for any real service. Islam sees this as unfair because the lender gets richer without taking any real risk. Instead of interest, Islamic banks use profit-sharing: they invest your money in real businesses and share the gains (and losses) with you.",
+      },
+      {
+        heading: "What is Zakat and how do you calculate it?",
+        body: "Zakat is a yearly charity that every Muslim must give if their savings stay above a minimum threshold (the Nisab) for a full lunar year. The Nisab is roughly the value of 85 grams of gold. If you have more than that saved up, you give 2.5% of it. Example: if you have $10,000 in savings all year, your Zakat is $250. It purifies your wealth and helps those in need.",
+      },
+      {
+        heading: "Halal vs Haram investments — the simple test",
+        body: "Ask yourself: does this company make money from alcohol, pork, gambling, conventional banks, weapons, or adult content? If yes, avoid it. If no, it might be halal — but also check the company's debt level. A company that is loaded with interest-based loans is still problematic. Tools like Tactifin's compliance checker do this screening for you automatically.",
+      },
+      {
+        heading: "What is a Sukuk?",
+        body: "A Sukuk is the Islamic version of a bond. Normal bonds pay you interest. Sukuk work differently — you actually own a piece of a real asset (like a building or infrastructure project), and your return comes from the rent or profit that asset generates. Same idea as a bond (regular income, relatively safe), but structured to avoid interest.",
+      },
+      {
+        heading: "What is Murabaha (Islamic mortgage)?",
+        body: "Instead of lending you money and charging interest, an Islamic bank buys the house for you, then sells it to you at a higher fixed price that you pay off in instalments. The profit is built into the price upfront — not charged over time as interest. The total amount you pay is the same as a regular mortgage in practice, but the structure is Shariah-compliant.",
+      },
+      {
+        heading: "Musharakah — profit sharing",
+        body: "Musharakah means partnership. You and the bank both own a share of the asset. You pay rent on the bank's share, and as you pay down the purchase, you own more and the bank owns less. Eventually you own it fully. This is another halal alternative to a conventional mortgage.",
+      },
+      {
+        heading: "Quick summary",
+        body: "Islamic finance is not complicated — avoid interest, avoid harmful industries, and make sure your contracts are clear and fair. Zakat keeps wealth circulating. Profit-sharing replaces lending. Real assets back everything. That's the whole idea.",
+      },
     ],
   },
   {
-    icon: Wallet, title: "Personal Budgeting 101", lessons: 6, level: "Beginner", duration: "45 min",
+    icon: Wallet,
+    title: "Personal Budgeting 101",
+    lessons: 6, level: "Beginner",
     description: "Master the basics of income tracking, expense categorization, and building a budget that actually works.",
-    whatYouLearn: [
-      "Apply the 50/30/20 rule to your own income",
-      "Categorize expenses automatically and spot leaks",
-      "Set up an emergency fund from scratch",
-      "Automate savings so they happen without willpower",
-    ],
-    lessonList: [
-      { title: "Why budgeting matters", duration: "5 min" },
-      { title: "The 50/30/20 rule", duration: "7 min" },
-      { title: "Setting up an emergency fund", duration: "8 min" },
-      { title: "Understanding debt types", duration: "10 min" },
-      { title: "Credit cards: friend or foe?", duration: "8 min" },
-      { title: "Automating your finances", duration: "7 min" },
+    content: [
+      {
+        heading: "Why most people don't budget — and why they should",
+        body: "Budgeting sounds boring, but it's really just telling your money where to go instead of wondering where it went. Without a budget, spending expands to fill whatever income you have. With one, you decide in advance what matters — and you stop accidentally funding things you don't care about.",
+      },
+      {
+        heading: "The 50/30/20 rule",
+        body: "Split your take-home pay into three buckets: 50% for needs (rent, food, transport, utilities), 30% for wants (eating out, entertainment, subscriptions), and 20% for saving and paying off debt. It's a starting point, not a law — if you live in an expensive city, your needs bucket might be 60%. Adjust to fit your life, but keep savings as non-negotiable.",
+      },
+      {
+        heading: "Building an emergency fund",
+        body: "Before you invest or pay off extra debt, save 3 to 6 months of essential expenses in a separate account you don't touch. Essential expenses means rent, food, utilities, and transport — not Netflix. This fund is your shield. Without it, any emergency (car repair, job loss, hospital visit) puts you into debt.",
+      },
+      {
+        heading: "Good debt vs bad debt",
+        body: "Not all debt is equal. A mortgage on a home that's appreciating in value is different from credit card debt at 20% interest. Good debt helps you build wealth or earn income. Bad debt finances things you've already consumed. The rule: if the interest rate is higher than what you could earn by investing, pay off the debt first.",
+      },
+      {
+        heading: "Credit cards — tool or trap?",
+        body: "A credit card is a great tool if you pay the full balance every month. You get rewards, fraud protection, and credit score building — for free. It becomes a trap the moment you carry a balance, because interest compounds fast. Treat your credit card like a debit card: only spend what you already have in your account.",
+      },
+      {
+        heading: "Automate your finances",
+        body: "The best budgeting system is one that runs without you. On payday, set up automatic transfers: savings first, then bills. What's left is yours to spend freely without guilt. Automating removes willpower from the equation — you can't accidentally spend what's already been moved.",
+      },
     ],
   },
   {
-    icon: TrendingUp, title: "Investing for Beginners", lessons: 10, level: "Intermediate", duration: "88 min",
+    icon: TrendingUp,
+    title: "Investing for Beginners",
+    lessons: 10, level: "Intermediate",
     description: "Understand stocks, bonds, ETFs, and halal investment options. Learn portfolio diversification and risk management.",
-    whatYouLearn: [
-      "Understand the difference between stocks, bonds, and ETFs",
-      "Build a diversified halal portfolio from any starting amount",
-      "Use dollar-cost averaging to reduce timing risk",
-      "Identify and avoid common investing mistakes",
-    ],
-    lessonList: [
-      { title: "Why invest at all?", duration: "6 min" },
-      { title: "Risk vs return explained", duration: "9 min" },
-      { title: "Index funds vs active funds", duration: "10 min" },
-      { title: "Dollar-cost averaging", duration: "8 min" },
-      { title: "Building a diversified portfolio", duration: "12 min" },
-      { title: "Halal ETFs and screened stocks", duration: "10 min" },
-      { title: "Reading a company's financials", duration: "9 min" },
-      { title: "Understanding market cycles", duration: "8 min" },
-      { title: "Tax-efficient investing", duration: "9 min" },
-      { title: "Common investing mistakes", duration: "7 min" },
+    content: [
+      {
+        heading: "Why invest at all?",
+        body: "Inflation eats your savings. If your money sits in a regular bank account earning 1% while inflation is 3%, you're losing purchasing power every year. Investing puts your money to work so it grows faster than inflation. Even small amounts invested consistently over decades can compound into significant wealth.",
+      },
+      {
+        heading: "Risk and return — the basic trade-off",
+        body: "Higher potential returns always come with higher risk. A savings account is safe but grows slowly. Stocks can double your money — or lose half of it. The key insight: the longer your time horizon, the more risk you can take, because you have time to recover from downturns. Short-term money (you'll need it in 2 years) should be in safe places. Long-term money (10+ years) can be in stocks.",
+      },
+      {
+        heading: "Stocks, bonds, and ETFs explained simply",
+        body: "A stock is a tiny piece of ownership in a company. A bond is a loan you give to a company or government, and they pay you interest. An ETF (Exchange-Traded Fund) is a basket of stocks or bonds that you buy as one thing — so instead of owning one company, you own a small slice of hundreds. ETFs are the easiest way for beginners to diversify instantly.",
+      },
+      {
+        heading: "Dollar-cost averaging",
+        body: "Nobody can time the market perfectly. Dollar-cost averaging means investing a fixed amount every month no matter what the market is doing. When prices are high, you buy fewer shares. When prices are low, you buy more. Over time, your average cost per share comes out reasonable. It removes emotion from investing and keeps you consistent.",
+      },
+      {
+        heading: "Halal investing — what to look for",
+        body: "For halal investing, screen out companies in alcohol, tobacco, pork, gambling, conventional finance, weapons, and adult content. Also avoid companies with excessive debt (usually above 33% of their total assets in interest-based loans). Halal ETFs do this screening for you. Examples include certain Islamic finance ETFs and Shariah-screened index funds.",
+      },
+      {
+        heading: "Diversification — don't put all eggs in one basket",
+        body: "Spread your investments across different companies, industries, and countries. If one sector crashes, your whole portfolio doesn't crash with it. A simple diversified portfolio could be: a global stock ETF, a bond fund, and some real estate exposure. That alone beats most active investors over the long term.",
+      },
+      {
+        heading: "Common mistakes beginners make",
+        body: "Trying to pick winning stocks. Selling when the market drops (panic selling). Waiting for the 'right time' to invest (there isn't one). Investing money you'll need soon. Checking your portfolio every day. The fix for all of these: automate monthly contributions into a diversified ETF, and don't look at it more than once a quarter.",
+      },
     ],
   },
   {
-    icon: Target, title: "Goal-Based Savings", lessons: 5, level: "Beginner", duration: "40 min",
+    icon: Target,
+    title: "Goal-Based Savings",
+    lessons: 5, level: "Beginner",
     description: "Set meaningful financial goals and build a savings plan to reach them. Includes emergency funds, Hajj, and retirement planning.",
-    whatYouLearn: [
-      "Define short, medium and long-term financial goals",
-      "Calculate how much to save monthly for each goal",
-      "Use high-yield accounts and saving buckets effectively",
-      "Plan specifically for Hajj, home purchase, and retirement",
-    ],
-    lessonList: [
-      { title: "Defining your financial goals", duration: "7 min" },
-      { title: "Short, medium and long-term buckets", duration: "8 min" },
-      { title: "High-yield savings accounts", duration: "8 min" },
-      { title: "Saving for Hajj and big milestones", duration: "9 min" },
-      { title: "Retirement planning basics", duration: "8 min" },
+    content: [
+      {
+        heading: "Why vague goals fail",
+        body: '"Save more money" is not a goal — it\'s a wish. A goal is: "Save $5,000 for Hajj in 18 months." That breaks down to $278 per month. Specific goals with deadlines and amounts are the only kind that actually work, because you can calculate exactly what to do each month and track whether you\'re on track.',
+      },
+      {
+        heading: "Short, medium, and long-term buckets",
+        body: "Divide your saving goals by time horizon. Short-term (under 2 years): emergency fund, holiday, phone. Keep these in a high-yield savings account — safe and accessible. Medium-term (2–10 years): house deposit, Hajj, car. Low-risk investments or savings. Long-term (10+ years): retirement, children's education. This money can be invested in stocks because you have time to ride out volatility.",
+      },
+      {
+        heading: "How to calculate your monthly saving target",
+        body: "Take the total amount you need, divide by the number of months until your goal, and that's your monthly number. Example: Need $12,000 for a house deposit in 3 years (36 months)? That's $333/month. If that's too much for your budget, either extend the timeline or reduce the target. No maths beyond division required.",
+      },
+      {
+        heading: "Saving for Hajj",
+        body: "Hajj costs vary significantly by country and package, but budgeting $5,000–$10,000 is reasonable for most people. Start a dedicated Hajj savings account and treat contributions like a bill. If you start early, even $100–$200/month compounds meaningfully over several years. Some Islamic banks offer dedicated Hajj savings accounts with Shariah-compliant returns.",
+      },
+      {
+        heading: "Retirement — start earlier than you think",
+        body: "The earlier you start, the less you need to save each month. $200/month from age 25 grows to roughly the same as $600/month from age 40, assuming the same return. The difference is time and compounding. Even if retirement feels far away, starting small now beats starting big later. Use any tax-advantaged accounts available in your country.",
+      },
     ],
   },
   {
-    icon: ShieldCheck, title: "Islamic Compliance in Daily Finance", lessons: 7, level: "Intermediate", duration: "56 min",
+    icon: ShieldCheck,
+    title: "Islamic Compliance in Daily Finance",
+    lessons: 7, level: "Intermediate",
     description: "Practical guidance on keeping your daily financial life Shariah-compliant — banking, insurance, and business transactions.",
-    whatYouLearn: [
-      "Choose Shariah-compliant bank accounts and credit products",
-      "Understand Takaful (Islamic insurance) vs conventional insurance",
-      "Screen business transactions for compliance red flags",
-      "Handle grey-area cases with confidence",
-    ],
-    lessonList: [
-      { title: "Shariah-compliant banking options", duration: "9 min" },
-      { title: "Takaful vs conventional insurance", duration: "8 min" },
-      { title: "Business transactions and partnerships", duration: "9 min" },
-      { title: "Screening stocks for Shariah compliance", duration: "8 min" },
-      { title: "Handling interest income (purification)", duration: "7 min" },
-      { title: "Crypto and digital assets — halal or haram?", duration: "8 min" },
-      { title: "Practical grey-area guide", duration: "7 min" },
+    content: [
+      {
+        heading: "Shariah-compliant banking",
+        body: "A regular bank takes your deposits, lends them out at interest, and pays you a smaller interest rate. An Islamic bank invests your money in real assets or trade, then shares the profit with you. Look for banks that offer Murabaha accounts, profit-sharing savings, and interest-free current accounts. In countries without Islamic banks, a regular current account (no interest earned, no overdraft interest) is generally acceptable.",
+      },
+      {
+        heading: "Takaful vs conventional insurance",
+        body: "Regular insurance involves paying premiums into a pool where the company profits from the difference. Takaful is cooperative insurance: participants contribute to a shared fund to help each other, and any surplus is returned to participants. It avoids the uncertainty (gharar) and interest elements of conventional insurance. Where Takaful isn't available, most scholars allow conventional insurance for necessities like health and car insurance.",
+      },
+      {
+        heading: "Business and trade",
+        body: "Islamic business ethics require transparency, fairness, and mutual consent. Contracts must be clear about what is being sold, at what price, and when delivery happens. Selling something you don't own yet (short selling) is generally not allowed. Partnerships should specify profit-sharing ratios upfront. A handshake deal is binding in Islamic law — written contracts just make it easier to verify.",
+      },
+      {
+        heading: "How to screen stocks",
+        body: "Step 1: Check the business — does it earn revenue from haram industries? If more than 5% of revenue comes from alcohol, pork, gambling, adult content, weapons, or conventional finance, skip it. Step 2: Check debt — is more than 33% of the company's assets financed by interest-bearing loans? If yes, it's risky. Step 3: Check cash — is more than 33% of assets in interest-bearing deposits? Same concern. Tactifin's compliance checker automates all three steps.",
+      },
+      {
+        heading: "Handling interest income you can't avoid",
+        body: "Sometimes interest lands in your account whether you want it or not — a regular savings account, a work pension fund, a government savings bond. The solution is purification: donate the interest amount to charity. You don't benefit from it, and you don't sin for receiving it accidentally. Track it separately and give it away each year.",
+      },
+      {
+        heading: "Crypto — halal or haram?",
+        body: "This is genuinely debated among scholars. The main concerns are: extreme speculation (gharar), no underlying asset, and potential use in illegal transactions. Bitcoin and Ethereum are considered permissible by some scholars when used as a medium of exchange or store of value — not for speculation. Others disagree entirely. The safe approach: treat crypto as a small, speculative part of your portfolio and avoid meme coins entirely.",
+      },
+      {
+        heading: "Grey areas — a practical guide",
+        body: "When you're genuinely unsure whether something is halal, ask: does this involve interest? Excessive uncertainty? Harm to others? Deception? If the answer is no to all four, it's probably fine. When in doubt, choose the more conservative option. The Prophet ﷺ said: leave what makes you doubt for what does not make you doubt. Financial peace of mind has real value.",
+      },
     ],
   },
   {
-    icon: Calculator, title: "Zakat & Tax Calculations", lessons: 4, level: "Beginner", duration: "32 min",
+    icon: Calculator,
+    title: "Zakat & Tax Calculations",
+    lessons: 4, level: "Beginner",
     description: "Step-by-step guides to calculating Zakat on various asset types and understanding your tax obligations.",
-    whatYouLearn: [
-      "Calculate Zakat on cash, gold, silver, investments, and business assets",
-      "Understand the nisab threshold and lunar year",
-      "Know which income deductions reduce your tax bill",
-      "Understand tax brackets and how progressive tax works",
-    ],
-    lessonList: [
-      { title: "Zakat on cash, savings and gold", duration: "9 min" },
-      { title: "Zakat on investments and business", duration: "8 min" },
-      { title: "Understanding tax brackets", duration: "8 min" },
-      { title: "Deductions that reduce your tax bill", duration: "7 min" },
+    content: [
+      {
+        heading: "Zakat on cash and savings",
+        body: "If your total savings (cash in hand + bank accounts) stay above the Nisab for a full lunar year, you owe 2.5% of that amount. Nisab = value of 85g of gold (roughly $5,000–$6,000 depending on gold prices — check current rates). Example: you have $8,000 in savings all year. Nisab is $5,500. Your Zakat = 2.5% × $8,000 = $200. Debt you owe can be deducted from your Zakatable assets.",
+      },
+      {
+        heading: "Zakat on gold and silver",
+        body: "Gold and silver are Zakatable at their current market value. If you own more than 85g of gold or 595g of silver, you pay 2.5% of the market value of all of it. Jewellery that is worn regularly — scholars differ on this. The majority say it is still Zakatable; some say jewellery in regular use is exempt. The safe approach: include it.",
+      },
+      {
+        heading: "Zakat on investments and business",
+        body: "For stocks: calculate the Zakatable portion of the company's assets (cash + inventory) per share you own, and pay 2.5% of that. If that's too complex, a simpler approach accepted by many scholars: pay 2.5% of the current market value of your shares. For business: add up cash, goods for sale, and money owed to you — subtract what you owe others — pay 2.5% on what remains.",
+      },
+      {
+        heading: "Understanding income tax",
+        body: "Tax is not the same as Zakat — both are obligations in their respective systems. Most countries use progressive tax brackets: you pay a lower rate on the first portion of your income and higher rates on higher portions. You only pay the top rate on the income above each threshold, not on everything you earn. Deductions (things like pension contributions, charitable donations, work expenses) reduce the income that gets taxed. Always claim every deduction you're entitled to.",
+      },
     ],
   },
 ];
@@ -1145,11 +1229,9 @@ function CourseModal({ course, onClose }: { course: Course; onClose: () => void 
             <div>
               <DialogTitle className="text-lg leading-snug">{course.title}</DialogTitle>
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                <span>{course.lessons} lessons</span>
+                <span>{course.level}</span>
                 <span>·</span>
-                <span>{course.duration}</span>
-                <span>·</span>
-                <span className="rounded-full border border-border px-1.5 py-0.5">{course.level}</span>
+                <span>{course.lessons} topics</span>
               </div>
             </div>
           </div>
@@ -1157,42 +1239,17 @@ function CourseModal({ course, onClose }: { course: Course; onClose: () => void 
 
         <p className="text-sm text-muted-foreground">{course.description}</p>
 
-        <div className="space-y-2">
-          <p className="text-sm font-medium">What you'll learn</p>
-          <ul className="space-y-1.5">
-            {course.whatYouLearn.map((item) => (
-              <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <span className="mt-0.5 h-4 w-4 shrink-0 rounded-full bg-[color:var(--brand-bolt)]/15 flex items-center justify-center">
-                  <span className="block h-1.5 w-1.5 rounded-full bg-[color:var(--brand-bolt)]" />
-                </span>
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="space-y-2">
-          <p className="text-sm font-medium">Course lessons</p>
-          <div className="space-y-1">
-            {course.lessonList.map((lesson, i) => (
-              <div key={i} className="flex items-center justify-between rounded-lg border border-border/60 bg-card px-3 py-2">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-bolt)]/10 text-[10px] font-medium text-[color:var(--brand-bolt)]">{i + 1}</span>
-                  <span className="text-sm">{lesson.title}</span>
-                </div>
-                <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0 ml-2">
-                  <Clock className="h-3 w-3" />{lesson.duration}
-                </span>
+        <div className="space-y-4">
+          {course.content.map((section, i) => (
+            <div key={i} className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-bolt)]/10 text-[10px] font-semibold text-[color:var(--brand-bolt)]">{i + 1}</span>
+                <p className="text-sm font-semibold">{section.heading}</p>
               </div>
-            ))}
-          </div>
+              <p className="text-sm text-muted-foreground leading-relaxed pl-7">{section.body}</p>
+            </div>
+          ))}
         </div>
-
-        <DialogFooter>
-          <Button className="w-full" onClick={onClose}>
-            <ArrowRight className="mr-2 h-4 w-4" /> Sign in to start learning
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
