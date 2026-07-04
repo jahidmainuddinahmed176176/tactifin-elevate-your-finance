@@ -1,54 +1,70 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { Send, Bot, User } from "lucide-react";
-import { getPublicMessages } from "@/lib/threads.functions";
 import { sendPublicChatMessage } from "@/lib/chat.functions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+type Message = { id: string; role: "user" | "assistant"; content: string };
+
 export function PublicChatInterface({ threadId }: { threadId: string }) {
-  const qc = useQueryClient();
-  const fetchMessages = useServerFn(getPublicMessages);
   const send = useServerFn(sendPublicChatMessage);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const { data: messages = [] } = useQuery({
-    queryKey: ["ai_messages_public", threadId],
-    queryFn: () => fetchMessages({ data: { threadId } }),
-  });
-
-  const mutation = useMutation({
-    mutationFn: (content: string) => send({ data: { threadId, content } }),
-    onMutate: (content) => {
-      qc.setQueryData<typeof messages>(["ai_messages_public", threadId], (old = []) => [
-        ...old,
-        { id: "tmp-" + Date.now(), role: "user", content, created_at: new Date().toISOString() },
-      ]);
-    },
-    onSuccess: (result) => {
-      qc.setQueryData<typeof messages>(["ai_messages_public", threadId], (old = []) => [
-        ...old,
-        { id: "tmp-" + Date.now(), role: "assistant", content: result.assistant, created_at: new Date().toISOString() },
-      ]);
-    },
-  });
+  // Reset conversation when a new thread opens
+  useEffect(() => {
+    setMessages([]);
+    setInput("");
+  }, [threadId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, mutation.isPending]);
+  }, [messages]);
 
   useEffect(() => {
     inputRef.current?.focus();
-  }, []);
+  }, [threadId]);
+
+  const mutation = useMutation({
+    mutationFn: async (content: string) => {
+      // Build history from current messages (exclude the optimistic user msg
+      // we already appended — the server builds the full turn itself)
+      const history = messages.map((m) => ({ role: m.role, content: m.content }));
+      return send({ data: { history, content } });
+    },
+    onMutate: (content) => {
+      // Optimistically add the user message
+      setMessages((prev) => [
+        ...prev,
+        { id: "tmp-user-" + Date.now(), role: "user", content },
+      ]);
+    },
+    onSuccess: (result) => {
+      setMessages((prev) => [
+        ...prev,
+        { id: "tmp-ai-" + Date.now(), role: "assistant", content: result.assistant },
+      ]);
+      inputRef.current?.focus();
+    },
+    onError: () => {
+      setMessages((prev) => [
+        ...prev,
+        { id: "err-" + Date.now(), role: "assistant", content: "Something went wrong. Please try again." },
+      ]);
+      inputRef.current?.focus();
+    },
+  });
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || mutation.isPending) return;
-    mutation.mutate(input);
+    const text = input.trim();
+    if (!text || mutation.isPending) return;
     setInput("");
+    mutation.mutate(text);
   };
 
   return (
@@ -69,7 +85,9 @@ export function PublicChatInterface({ threadId }: { threadId: string }) {
             )}
             <div className={cn(
               "rounded-2xl px-3 py-2 md:px-4 md:py-2.5 text-xs md:text-sm whitespace-pre-wrap break-words max-w-[75%] md:max-w-[70%]",
-              m.role === "user" ? "bg-primary text-primary-foreground rounded-br-none" : "bg-accent text-foreground rounded-bl-none",
+              m.role === "user"
+                ? "bg-primary text-primary-foreground rounded-br-none"
+                : "bg-accent text-foreground rounded-bl-none",
             )}>
               {m.content}
             </div>
@@ -85,7 +103,9 @@ export function PublicChatInterface({ threadId }: { threadId: string }) {
             <div className="h-6 w-6 md:h-7 md:w-7 shrink-0 rounded-full bg-brand-gradient flex items-center justify-center text-background flex-shrink-0">
               <Bot className="h-3 w-3 md:h-3.5 md:w-3.5" />
             </div>
-            <div className="rounded-2xl bg-accent px-3 py-2 md:px-4 md:py-2.5 text-xs md:text-sm text-muted-foreground rounded-bl-none">Thinking…</div>
+            <div className="rounded-2xl bg-accent px-3 py-2 md:px-4 md:py-2.5 text-xs md:text-sm text-muted-foreground rounded-bl-none">
+              Thinking…
+            </div>
           </div>
         )}
         <div ref={bottomRef} />
