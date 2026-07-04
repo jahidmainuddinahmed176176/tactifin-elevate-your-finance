@@ -1,27 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { allowPublicChat } from "@/integrations/supabase/public-middleware";
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { generateText } from "ai";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const SYSTEM = `You are Tactifin AI, a helpful financial assistant specialising in personal finance, budgeting, Islamic finance, Shariah compliance, and tax questions.
 Be concise, accurate, and practical. For Islamic finance questions, reference Quran/Hadith where relevant.
 Respond in the same language as the user.`;
 
-function createGeminiProvider(apiKey: string) {
-  return createOpenAICompatible({
-    name: "google-gemini",
-    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
-    apiKey,
-  });
-}
-
 export const sendChatMessage = createServerFn({ method: "POST" })
   .middleware([allowPublicChat])
   .validator((d: unknown) =>
     z.object({
-      threadId: z.string().min(1),  // Accept any non-empty string as threadId
+      threadId: z.string().min(1),
       content: z.string().min(1).max(4000),
     }).parse(d),
   )
@@ -31,7 +21,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     try {
       const key = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY ?? process.env.VITE_GEMINI_API_KEY;
       if (!key) {
-        console.error("[Tactifin AI] Missing API key. Checked: GEMINI_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, VITE_GEMINI_API_KEY");
+        console.error("[Tactifin AI] Missing API key");
         throw new Error("Missing GEMINI_API_KEY");
       }
 
@@ -58,26 +48,45 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         throw new Error(e2.message);
       }
 
-      console.log("[Tactifin AI] Calling Gemini API...");
-      const gemini = createGeminiProvider(key);
+      console.log("[Tactifin AI] Calling Gemini API directly...");
       
-      // Convert assistant role to user for Gemini API compatibility
-      // Gemini API only accepts "user" and "assistant" roles
-      const messages = (history ?? []).map((m) => ({
-        role: m.role === "assistant" ? "user" : (m.role as "user" | "assistant"),
-        content: m.content,
+      // Build messages for Gemini API
+      // Gemini expects: user messages as "user", assistant messages as "model"
+      const contents = (history ?? []).map((m) => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }],
       }));
-      
-      console.log("[Tactifin AI] Messages to send to Gemini:", JSON.stringify(messages));
-      
-      const result = await generateText({
-        model: gemini("gemini-2.5-flash"),
-        system: SYSTEM,
-        messages,
-      });
 
-      console.log("[Tactifin AI] Got response from Gemini, saving to database...");
-      const assistantText = result.text;
+      console.log("[Tactifin AI] Request to Gemini with contents:", JSON.stringify(contents));
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: SYSTEM }],
+            },
+            contents,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("[Tactifin AI] Gemini API error:", errorData);
+        throw new Error(`Gemini API error: ${errorData.error?.message || response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log("[Tactifin AI] Got response from Gemini");
+      
+      const assistantText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!assistantText) {
+        throw new Error("No text in Gemini response");
+      }
+
       const { error: e3 } = await supabase.from("ai_messages").insert({
         thread_id: data.threadId,
         user_id: null,
