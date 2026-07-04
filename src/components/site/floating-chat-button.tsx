@@ -21,8 +21,8 @@ export function FloatingChatButton() {
   async function handleClick() {
     setLoading(true);
     try {
-      // Generate a valid UUID — required by server-side z.string().uuid() validation
-      const id = crypto.randomUUID();
+      // Generate a local thread ID — no server call needed
+      const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
       setThreadId(id);
       setIsOpen(true);
     } catch (error) {

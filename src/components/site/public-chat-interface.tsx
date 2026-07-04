@@ -31,11 +31,8 @@ export function PublicChatInterface({ threadId }: { threadId: string }) {
     onSuccess: (result) => {
       qc.setQueryData<typeof messages>(["ai_messages_public", threadId], (old = []) => [
         ...old,
-        { id: "tmp-ai-" + Date.now(), role: "assistant", content: result.assistant, created_at: new Date().toISOString() },
+        { id: "tmp-" + Date.now(), role: "assistant", content: result.assistant, created_at: new Date().toISOString() },
       ]);
-    },
-    onSettled: () => {
-      inputRef.current?.focus();
     },
   });
 
