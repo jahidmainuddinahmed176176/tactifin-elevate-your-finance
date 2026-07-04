@@ -6,7 +6,7 @@ const FAQS = [
   { q: "What is the Rewinder feature?", a: "Rewinder automatically replays your financial history month by month. It surfaces spending trends, income vs expense charts, and category breakdowns so you can spot patterns and make smarter decisions going forward." },
   { q: "How does Bill Pay work?", a: "Add your recurring bills (electricity, rent, internet, etc.) and Tactifin tracks due dates, sends reminders, and lets you mark bills as paid or enable autopay. You'll always know exactly what's due and when." },
   { q: "Is my bank data secure?", a: "Bank and mobile wallet integrations use read-only connections. Fraud detection runs continuously, flagging anomalies before they become losses." },
-  { q: "When can I use Tactifin?", a: "Tactifin is currently in private beta. Join the waitlist for early access and partner program updates." },
+  { q: "When can I use Tactifin?", a: "Tactifin is live and available now. Sign up for free and start tracking your finances, calculating Zakat, and checking Shariah compliance today." },
 ];
 
 export function FAQ() {

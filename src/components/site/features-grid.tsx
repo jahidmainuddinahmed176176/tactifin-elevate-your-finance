@@ -8,7 +8,7 @@ const FEATURES = [
   { icon: Banknote, t: "Shariah-Based Finance", d: "Islamic compliance checker with Halal/Haram detection, Zakat alerts and interest-exposure reports." },
   { icon: Sparkles, t: "AI Recommendations", d: "Personalised guidance, fraud detection and an AI chatbot that knows your finances." },
   { icon: CreditCard, t: "Bill Pay System", d: "Track recurring bills, set autopay reminders, and never miss a due date — all categorised automatically." },
-  { icon: RotateCcw, t: "Rewinder (Automatics)", d: "Replay your financial history month by month with AI-generated insights and category breakdowns." },
+  { icon: RotateCcw, t: "Rewinder", d: "Replay your financial history month by month with AI-generated insights and category breakdowns." },
 ];
 
 export function FeaturesGrid() {

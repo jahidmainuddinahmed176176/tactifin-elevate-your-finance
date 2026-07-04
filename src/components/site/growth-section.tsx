@@ -2,7 +2,7 @@ import { TrendingUp, Brain, ShieldCheck } from "lucide-react";
 
 const STATS = [
   { icon: TrendingUp, k: "Income & Expense", v: "Real-time tracking", d: "Auto-collect cash in and cash out, categorized by AI the moment it lands." },
-  { icon: Brain, k: "ML Budgeting", v: "Predictive control", d: "Personal tax calculation, reminders and goal-based savings tuned to your life." },
+  { icon: Brain, k: "ML Budgeting", v: "Predictive control", d: "Machine learning models predict your spending patterns and suggest smarter budget limits before you overspend." },
   { icon: ShieldCheck, k: "Fraud Detection", v: "Always on", d: "Anomaly alerts, credit-score monitoring and Islamic compliance baked in." },
 ];
 

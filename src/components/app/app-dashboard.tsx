@@ -156,7 +156,7 @@ function DashboardPanel() {
   const overBudget = budgets.filter((b) => (spentBy[b.category] ?? 0) > b.monthly_limit);
 
   const stats = [
-    { label: "Cash in Hand", value: fmt(balance), icon: Wallet, accent: "text-emerald-600" },
+    { label: "Net Balance", value: fmt(balance), icon: Wallet, accent: "text-emerald-600" },
     { label: "Income", value: fmt(income), icon: TrendingUp, accent: "text-emerald-500" },
     { label: "Expenses", value: fmt(expenses), icon: TrendingDown, accent: "text-rose-500" },
     { label: "Flagged", value: String(haramCount), icon: AlertTriangle, accent: "text-amber-500" },
@@ -248,7 +248,7 @@ function DashboardPanel() {
           </CardHeader>
           <CardContent>
             {budgets.length === 0 ? <p className="text-sm text-muted-foreground">No budgets set.</p> : overBudget.length === 0 ? (
-              <div className="flex items-center gap-2 text-sm text-emerald-500"><TrendingDown className="h-4 w-4" /> All budgets on track this month.</div>
+              <div className="flex items-center gap-2 text-sm text-emerald-500"><ShieldCheck className="h-4 w-4" /> All budgets on track this month.</div>
             ) : (
               <div className="space-y-2">
                 {overBudget.map((b) => {
@@ -1229,8 +1229,6 @@ function CourseModal({ course, onClose }: { course: Course; onClose: () => void 
             <div>
               <DialogTitle className="text-lg leading-snug">{course.title}</DialogTitle>
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                <span>{course.level}</span>
-                <span>·</span>
                 <span>{course.lessons} topics</span>
               </div>
             </div>
@@ -1276,10 +1274,8 @@ function LearnPanel() {
                 <course.icon className="h-5 w-5 text-[color:var(--brand-bolt)]" />
               </div>
               <CardTitle className="mt-3 text-base">{course.title}</CardTitle>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span>{course.lessons} lessons</span>
-                <span>·</span>
-                <span>{course.level}</span>
+              <div className="text-xs text-muted-foreground">
+                <span>{course.lessons} topics</span>
               </div>
             </CardHeader>
             <CardContent>

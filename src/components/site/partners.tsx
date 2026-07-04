@@ -35,8 +35,7 @@ export function Partners() {
                 { k: "Early", v: "Access" },
               ].map((c) => (
                 <div key={c.v} className="rounded-2xl border border-border/60 bg-[color:var(--surface-elevated)] p-6">
-                  <div className="text-xs uppercase tracking-wider text-muted-foreground">{c.k}</div>
-                  <div className="mt-2 text-2xl">{c.v}</div>
+                  <div className="text-lg font-medium">{c.k} {c.v}</div>
                 </div>
               ))}
             </div>

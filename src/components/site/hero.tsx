@@ -24,11 +24,11 @@ import { ArrowRight, Sparkles } from "lucide-react";
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
               <Button size="lg" className="rounded-full px-8 btn-glow-idle" asChild>
                 <a href="#app">
-                  Explore the workspace <ArrowRight className="ml-1.5 h-4 w-4" />
+                  Try the workspace <ArrowRight className="ml-1.5 h-4 w-4" />
                 </a>
               </Button>
               <Button size="lg" variant="ghost" className="rounded-full px-8 border border-border/60 btn-glow" asChild>
-                <a href="#features">Explore the platform</a>
+                <a href="#features">See features</a>
               </Button>
             </div>
           </div>
@@ -40,8 +40,8 @@ import { ArrowRight, Sparkles } from "lucide-react";
               <div className="rounded-2xl bg-[color:var(--surface-sunken)] p-8 md:p-12">
                 <div className="grid gap-6 md:grid-cols-3">
                   {[
-                    { k: "Net worth", v: "$184,920", d: "+12.4%" },
-                    { k: "This month", v: "$6,240", d: "Under budget" },
+                    { k: "Net worth", v: "$184,920", d: "+12.4% this year" },
+                    { k: "Monthly income", v: "$6,240", d: "Under budget" },
                     { k: "Zakat estimate", v: "$1,108", d: "Auto-calculated" },
                   ].map((s) => (
                     <div key={s.k} className="rounded-xl border border-border/60 bg-card p-5">
@@ -60,7 +60,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
                     </div>
                   </div>
                   <div className="hidden gap-2 md:flex">
-                    {["Food", "Rent", "Business", "Taxi"].map((t) => (
+                    {["Food", "Rent", "Business", "Transport"].map((t) => (
                       <span key={t} className="rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground">{t}</span>
                     ))}
                   </div>

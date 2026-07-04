@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { allowPublicChat } from "@/integrations/supabase/public-middleware";
+import { GoogleGenAI } from "@google/genai";
 
 const SYSTEM = `You are Tactifin AI, a helpful financial assistant specialising in personal finance, budgeting, Islamic finance, Shariah compliance, and tax questions.
 Be concise, accurate, and practical. For Islamic finance questions, reference Quran/Hadith where relevant.
@@ -11,46 +12,36 @@ const MessageSchema = z.object({ role: z.enum(["user", "assistant"]), content: z
 async function callGemini(history: { role: string; content: string }[], content: string): Promise<string> {
   const key =
     process.env.GEMINI_API_KEY ??
+    process.env.GOOGLE_API_KEY ??
     process.env.GOOGLE_GENERATIVE_AI_API_KEY ??
     process.env.VITE_GEMINI_API_KEY;
 
   if (!key) {
     console.error("[Tactifin AI] Missing GEMINI_API_KEY env var");
-    throw new Error("GEMINI_API_KEY is not set");
+    throw new Error("GEMINI_API_KEY is not set in environment variables");
   }
+
+  // Use the official Google GenAI SDK — handles both AIza and AQ. key formats correctly
+  const ai = new GoogleGenAI({ apiKey: key });
 
   const contents = [
     ...history.map((m) => ({
-      role: m.role === "assistant" ? "model" : "user",
+      role: m.role === "assistant" ? "model" : "user" as "user" | "model",
       parts: [{ text: m.content }],
     })),
-    { role: "user", parts: [{ text: content }] },
+    { role: "user" as const, parts: [{ text: content }] },
   ];
 
-  const response = await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": key,
-      },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM }] },
-        contents,
-      }),
-    }
-  );
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents,
+    config: {
+      systemInstruction: SYSTEM,
+    },
+  });
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    console.error("[Tactifin AI] Gemini error:", JSON.stringify(err));
-    throw new Error(err?.error?.message ?? response.statusText);
-  }
-
-  const result = await response.json();
-  const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error("Empty Gemini response");
+  const text = response.text;
+  if (!text) throw new Error("Empty response from Gemini");
   return text;
 }
 
@@ -70,10 +61,9 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       console.error("[Tactifin AI] sendChatMessage error:", msg);
-      // Surface the real error so it's visible during debugging
-      return { assistant: `⚠️ AI error: ${msg}` };
+      return { assistant: `Sorry, the AI assistant is temporarily unavailable. (${msg})` };
     }
   });
 
-/** Used by the public floating chat (removed, kept for compatibility). */
+/** Alias for public chat (floating button removed, kept for compatibility). */
 export const sendPublicChatMessage = sendChatMessage;
