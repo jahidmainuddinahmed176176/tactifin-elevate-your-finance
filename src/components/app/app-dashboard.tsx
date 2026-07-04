@@ -874,15 +874,14 @@ function ChatPanel() {
 
     try {
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      const apiUrl = import.meta.env.VITE_AI_API_URL;
-      const url = (apiUrl ?? "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=") + (apiKey ?? "");
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey ?? ""}`;
 
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [
-            ...messages.map((m) => ({ role: m.role, parts: [{ text: m.content }] })),
+            ...messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
             { role: "user", parts: [{ text: userMsg.content }] },
           ],
           systemInstruction: { parts: [{ text: "You are Tactifin's AI financial assistant. You help with budgeting, Zakat, Islamic finance, expense tracking, and general financial questions. Keep answers concise and helpful." }] },
