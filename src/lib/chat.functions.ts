@@ -68,8 +68,10 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       const assistant = await callGemini(data.history, data.content);
       return { assistant };
     } catch (error) {
-      console.error("[Tactifin AI] sendChatMessage error:", error instanceof Error ? error.message : error);
-      return { assistant: "Sorry, the AI assistant is temporarily unavailable. Please try again later." };
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error("[Tactifin AI] sendChatMessage error:", msg);
+      // Surface the real error so it's visible during debugging
+      return { assistant: `⚠️ AI error: ${msg}` };
     }
   });
 
