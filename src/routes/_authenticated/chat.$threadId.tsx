@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { Send, Bot, User } from "lucide-react";
-import { getMessages } from "@/lib/threads.functions";
 import { sendChatMessage } from "@/lib/chat.functions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -12,40 +11,53 @@ export const Route = createFileRoute("/_authenticated/chat/$threadId")({
   component: ChatView,
 });
 
+type Message = { id: string; role: "user" | "assistant"; content: string };
+
 function ChatView() {
   const { threadId } = Route.useParams();
-  const qc = useQueryClient();
-  const fetchMessages = useServerFn(getMessages);
   const send = useServerFn(sendChatMessage);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const { data: messages = [] } = useQuery({
-    queryKey: ["ai_messages", threadId],
-    queryFn: () => fetchMessages({ data: { threadId } }),
-  });
-
-  const mutation = useMutation({
-    mutationFn: (content: string) => send({ data: { threadId, content } }),
-    onMutate: (content) => {
-      qc.setQueryData<typeof messages>(["ai_messages", threadId], (old = []) => [
-        ...old,
-        { id: "tmp-" + Date.now(), role: "user", content, created_at: new Date().toISOString() },
-      ]);
-    },
-    onSettled: () => {
-      qc.invalidateQueries({ queryKey: ["ai_messages", threadId] });
-      qc.invalidateQueries({ queryKey: ["ai_threads"] });
-      inputRef.current?.focus();
-    },
-  });
+  // Reset conversation when switching threads
+  useEffect(() => {
+    setMessages([]);
+    setInput("");
+    inputRef.current?.focus();
+  }, [threadId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, mutation.isPending]);
+  }, [messages]);
 
-  useEffect(() => { inputRef.current?.focus(); }, [threadId]);
+  const mutation = useMutation({
+    mutationFn: async (content: string) => {
+      const history = messages.map((m) => ({ role: m.role, content: m.content }));
+      return send({ data: { history, content } });
+    },
+    onMutate: (content) => {
+      setMessages((prev) => [
+        ...prev,
+        { id: "user-" + Date.now(), role: "user", content },
+      ]);
+    },
+    onSuccess: (result) => {
+      setMessages((prev) => [
+        ...prev,
+        { id: "ai-" + Date.now(), role: "assistant", content: result.assistant },
+      ]);
+      inputRef.current?.focus();
+    },
+    onError: () => {
+      setMessages((prev) => [
+        ...prev,
+        { id: "err-" + Date.now(), role: "assistant", content: "Something went wrong. Please try again." },
+      ]);
+      inputRef.current?.focus();
+    },
+  });
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -72,7 +84,7 @@ function ChatView() {
               </div>
             )}
             <div className={cn(
-              "max-w-[85%] md:max-w-[80%] rounded-2xl px-3 py-2 md:px-4 md:py-2.5 text-sm whitespace-pre-wrap break-words overflow-wrap-anywhere",
+              "max-w-[85%] md:max-w-[80%] rounded-2xl px-3 py-2 md:px-4 md:py-2.5 text-sm whitespace-pre-wrap break-words",
               m.role === "user" ? "bg-primary text-primary-foreground" : "bg-accent text-foreground",
             )}>
               {m.content}
