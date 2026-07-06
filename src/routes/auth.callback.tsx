@@ -19,7 +19,7 @@ function AuthCallback() {
 
       if (errorDescription) {
         console.error("OAuth callback error:", errorDescription);
-        if (!cancelled) navigate({ to: "/auth", replace: true });
+        if (!cancelled) navigate({ to: "/", replace: true });
         return;
       }
 
@@ -27,14 +27,14 @@ function AuthCallback() {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (error) {
           console.error("OAuth callback error:", error);
-          if (!cancelled) navigate({ to: "/auth", replace: true });
+          if (!cancelled) navigate({ to: "/", replace: true });
           return;
         }
       }
 
       const { data } = await supabase.auth.getSession();
       if (!cancelled) {
-        navigate({ to: data.session ? "/app" : "/auth", replace: true });
+        navigate({ to: data.session ? "/" : "/", replace: true });
       }
     }
 
