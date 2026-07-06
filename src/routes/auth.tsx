@@ -21,7 +21,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/app" });
+      if (data.session) navigate({ to: "/" });
     });
   }, [navigate]);
 
@@ -34,17 +34,17 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin + "/app",
+            emailRedirectTo: window.location.origin,
             data: { full_name: name },
           },
         });
         if (error) throw error;
         toast.success("Account created");
-        navigate({ to: "/app" });
+        navigate({ to: "/" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/app" });
+        navigate({ to: "/" });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Authentication failed");
