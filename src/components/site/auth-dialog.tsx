@@ -31,7 +31,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
         onOpenChange(false);
-        navigate({ to: "/app" });
+        navigate({ to: "/" });
       }
     });
   }, [open, navigate, onOpenChange]);
@@ -45,20 +45,20 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin + "/app",
+            emailRedirectTo: window.location.origin,
             data: { full_name: name },
           },
         });
         if (error) throw error;
         toast.success("Account created");
         onOpenChange(false);
-        navigate({ to: "/app" });
+        navigate({ to: "/" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Signed in");
         onOpenChange(false);
-        navigate({ to: "/app" });
+        navigate({ to: "/" });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Authentication failed");
