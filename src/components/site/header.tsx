@@ -7,9 +7,8 @@ import { TactifinLogo } from "./tactifin-logo";
 import { AuthDialog } from "./auth-dialog";
 
 const NAV = [
-  { label: "Platform", href: "#platform" },
+  { label: "Platform", href: "#app" },
   { label: "Features", href: "#features" },
-  { label: "Intelligence", href: "#ai" },
   { label: "Partners", href: "#partners" },
   { label: "FAQ", href: "#faq" },
 ];
