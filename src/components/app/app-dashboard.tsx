@@ -874,26 +874,37 @@ function ChatPanel() {
 
     try {
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey ?? ""}`;
+      if (!apiKey) throw new Error("VITE_GEMINI_API_KEY is not set in Vercel env vars");
 
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            ...messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
-            { role: "user", parts: [{ text: userMsg.content }] },
-          ],
-          systemInstruction: { parts: [{ text: "You are Tactifin's AI financial assistant. You help with budgeting, Zakat, Islamic finance, expense tracking, and general financial questions. Keep answers concise and helpful." }] },
-        }),
-      });
+      const res = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey,
+          },
+          body: JSON.stringify({
+            contents: [
+              ...messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
+              { role: "user", parts: [{ text: userMsg.content }] },
+            ],
+            systemInstruction: { parts: [{ text: "You are Tactifin's AI financial assistant. You help with budgeting, Zakat, Islamic finance, expense tracking, and general financial questions. Keep answers concise and helpful." }] },
+          }),
+        },
+      );
 
-      if (!res.ok) throw new Error("AI request failed");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const errMsg = (errData as { error?: { message?: string } })?.error?.message ?? res.statusText;
+        throw new Error(`Gemini ${res.status}: ${errMsg}`);
+      }
       const data = await res.json();
       const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "Sorry, I could not generate a response.";
       setMessages((m) => [...m, { role: "assistant", content: reply }]);
-    } catch {
-      setMessages((m) => [...m, { role: "assistant", content: "Sorry, the AI assistant is temporarily unavailable. Please try again later." }]);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setMessages((m) => [...m, { role: "assistant", content: `⚠️ ${msg}` }]);
     } finally {
       setLoading(false);
     }
