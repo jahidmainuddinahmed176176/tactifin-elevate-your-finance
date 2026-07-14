@@ -1287,7 +1287,7 @@ function AiAssistantPage() {
       <Card><CardContent className="flex flex-col items-center gap-4 py-16 text-center">
         <Bot className="h-12 w-12 text-[color:var(--brand-bolt)]" />
         <div><p className="font-medium">AI Assistant coming soon</p><p className="text-sm text-muted-foreground mt-1">Smart financial insights powered by AI will be available here.</p></div>
-      </Card></Card>
+      </CardContent></Card>
     </div>
   );
 }
