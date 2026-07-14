@@ -21,7 +21,6 @@ export function SiteFooter() {
             <ul className="mt-4 space-y-2 text-sm">
               <li><a href="#app" className="text-foreground/70 transition-smooth hover:text-foreground">Workspace</a></li>
               <li><a href="#features" className="text-foreground/70 transition-smooth hover:text-foreground">Features</a></li>
-              <li><a href="#partners" className="text-foreground/70 transition-smooth hover:text-foreground">Partners</a></li>
               <li><a href="#faq" className="text-foreground/70 transition-smooth hover:text-foreground">FAQ</a></li>
             </ul>
           </div>
@@ -30,7 +29,6 @@ export function SiteFooter() {
             <ul className="mt-4 space-y-2 text-sm">
               <li><a href="/auth" className="text-foreground/70 transition-smooth hover:text-foreground">Sign in</a></li>
               <li><a href="/auth" className="text-foreground/70 transition-smooth hover:text-foreground">Create account</a></li>
-              <li><a href="#partners" className="text-foreground/70 transition-smooth hover:text-foreground">Partner program</a></li>
             </ul>
           </div>
         </div>
