@@ -44,7 +44,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
-      {/* Sidebar */}
+      {/* Sidebar - vertical layout */}
       <aside className={cn(
         "fixed inset-y-0 left-0 z-40 w-64 border-r border-border bg-card flex-col md:flex transition-transform",
         mobile ? "flex translate-x-0" : "hidden -translate-x-full md:translate-x-0",
@@ -55,15 +55,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="text-lg font-medium tracking-tight">Tactifin</span>
         </div>
 
-        {/* Scrollable nav area */}
-        <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
-          {/* Main nav */}
+        {/* Scrollable nav area - items are stacked vertically by default in flex-col */}
+        <nav className="flex-1 flex-col space-y-0.5 overflow-y-auto p-3">
+          {/* Main nav - each item is a row, stacked vertically */}
           {NAV.map(n => {
             const active = path === n.to || (n.to !== "/app" && path.startsWith(n.to));
             return (
               <Link key={n.to} to={n.to} onClick={() => setMobile(false)}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                  "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
                   active ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                 )}>
                 <n.icon className="h-4 w-4 shrink-0" />

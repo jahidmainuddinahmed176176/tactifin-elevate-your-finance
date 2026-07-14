@@ -1702,107 +1702,156 @@ function IncomeStatementPanel() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   BALANCE SHEET PANEL
+   BALANCE SHEET PANEL  (Statement of Financial Position — IAS 1)
 ══════════════════════════════════════════════════════════════ */
 function BalanceSheetPanel() {
   const { data: entries = [] } = useQuery({ queryKey: ["journal"], queryFn: getJournalEntries });
   const { data: accounts = [] } = useQuery({ queryKey: ["accounts"], queryFn: getAccounts });
   const balances = useMemo(() => computeLedger(entries, accounts), [entries, accounts]);
 
-  const acctBal = (name: string) => balances.find(b => b.accountName === name)?.balance ?? 0;
+  const bal = (name: string) => balances.find(b => b.accountName === name)?.balance ?? 0;
 
-  const assetAccounts   = accounts.filter(a => a.type === "asset");
-  const liabAccounts    = accounts.filter(a => a.type === "liability");
-  const equityAccounts  = accounts.filter(a => a.type === "equity");
+  // ── Non-current assets ──
+  const ppe          = bal("Property, Plant & Equipment") - bal("Accumulated Depreciation");
+  const goodwill     = bal("Goodwill");
+  const intangibles  = bal("Intangible Assets");
+  const investAssoc  = bal("Investments accounted for under the equity method");
+  const bioAssets    = bal("Biological Assets");
+  const ncFinAssets  = bal("Financial assets (other than equity-accounted investments, trade receivables and cash)");
+  const totalNCA     = ppe + goodwill + intangibles + investAssoc + bioAssets + ncFinAssets;
 
-  const totalAssets     = assetAccounts.reduce((s, a) => s + acctBal(a.name), 0);
-  const totalLiab       = liabAccounts.reduce((s, a) => s + acctBal(a.name), 0);
+  // ── Current assets ──
+  const inventories  = bal("Inventory");
+  const tradeRec     = bal("Accounts Receivable");
+  const cash         = bal("Cash") + bal("Bank");
+  const heldForSale  = bal("Assets classified as held for sale");
+  const totalCA      = inventories + tradeRec + cash + heldForSale;
 
-  // Owner's equity = Capital - Drawings + Retained earnings (Net Income)
-  const capital   = acctBal("Owner's Capital");
-  const drawings  = acctBal("Owner's Drawings");
-  const sales     = acctBal("Sales Revenue") - acctBal("Sales Returns");
-  const cogs      = acctBal("Purchases") - acctBal("Purchase Returns");
-  const opExpenses = accounts.filter(a => a.type === "expense" && !["Purchases","Purchase Returns"].includes(a.name)).reduce((s,a) => s + acctBal(a.name), 0);
-  const netIncome = sales - cogs - opExpenses;
-  const totalEquity = capital - drawings + netIncome;
-  const totalLiabEquity = totalLiab + totalEquity;
-  const isBalanced = Math.abs(totalAssets - totalLiabEquity) < 0.001;
+  const totalAssets  = totalNCA + totalCA;
 
-  function Section({ title, rows }: { title: string; rows: { label: string; amount: number }[] }) {
-    const total = rows.reduce((s, r) => s + r.amount, 0);
+  // ── Equity ──
+  const shareCapital  = bal("Owner's Capital");
+  const retained      = bal("Owner's Capital") === 0 ? 0 : (() => {
+    const revenue = accounts.filter(a => a.type === "revenue").reduce((s,a) => s + bal(a.name), 0);
+    const expenses = accounts.filter(a => a.type === "expense").reduce((s,a) => s + bal(a.name), 0);
+    return revenue - expenses - bal("Owner's Drawings");
+  })();
+  const otherEquity   = bal("Other components of equity");
+  const nci           = bal("Non-controlling interests");
+  const totalEquity   = shareCapital + retained + otherEquity + nci;
+
+  // ── Non-current liabilities ──
+  const ncBorrowings  = bal("Bank Loan");
+  const ncProvisions  = bal("Provisions (non-current)");
+  const deferredTax   = bal("Deferred tax liabilities and assets");
+  const ncFinLiab     = bal("Financial liabilities (other than trade and other payables and provisions)");
+  const totalNCL      = ncBorrowings + ncProvisions + deferredTax + ncFinLiab;
+
+  // ── Current liabilities ──
+  const tradePayables = bal("Accounts Payable");
+  const cProvisions   = bal("Accrued Liabilities");
+  const currentTax    = bal("Liabilities and assets for current tax");
+  const cFinLiab      = bal("Financial liabilities (current, other than trade payables and provisions)");
+  const disposalLiab  = bal("Liabilities in disposal groups classified as held for sale");
+  const totalCL       = tradePayables + cProvisions + currentTax + cFinLiab + disposalLiab;
+
+  const totalLiab     = totalNCL + totalCL;
+  const totalEL       = totalEquity + totalLiab;
+  const isBalanced    = Math.abs(totalAssets - totalEL) < 0.01;
+
+  function BSRow({ label, amount, bold = false, indent = false, topBorder = false, doubleBorder = false }:
+    { label: string; amount: number; bold?: boolean; indent?: boolean; topBorder?: boolean; doubleBorder?: boolean }) {
+    if (amount === 0 && !bold) return null;
     return (
-      <>
-        <tr><td colSpan={2} className="pt-5 pb-1 text-xs uppercase tracking-wider text-muted-foreground font-semibold">{title}</td></tr>
-        {rows.filter(r => r.amount !== 0).map(r => (
-          <tr key={r.label} className="border-b border-border/30">
-            <td className="py-1.5 pl-4 text-sm">{r.label}</td>
-            <td className="py-1.5 text-right tabular-nums text-sm w-36">{fmtTk(r.amount)}</td>
-          </tr>
-        ))}
-        <tr className="font-semibold border-t border-border">
-          <td className="py-2">Total {title}</td>
-          <td className="py-2 text-right tabular-nums w-36">{fmtTk(total)}</td>
-        </tr>
-      </>
+      <tr className={topBorder ? "border-t border-border" : ""}>
+        <td className={`py-1 text-sm ${indent ? "pl-6" : ""} ${bold ? "font-semibold" : ""}`}>{label}</td>
+        <td className={`py-1 text-right tabular-nums text-sm w-32 ${bold ? "font-semibold" : ""} ${doubleBorder ? "border-b-2 border-border" : ""} ${amount < 0 ? "text-rose-500" : ""}`}>
+          {amount < 0 ? `(${fmtTk(Math.abs(amount))})` : amount === 0 ? "—" : fmtTk(amount)}
+        </td>
+      </tr>
     );
+  }
+
+  function SectionHead({ label }: { label: string }) {
+    return <tr><td colSpan={2} className="pt-5 pb-1 text-xs font-bold uppercase tracking-wider">{label}</td></tr>;
   }
 
   if (balances.length === 0) return (
     <div className="space-y-4">
-      <h2 className="text-2xl">Balance Sheet</h2>
-      <Card><CardContent className="py-12 text-center text-muted-foreground text-sm">No data. Post journal entries first.</CardContent></Card>
+      <h2 className="text-2xl">Statement of Financial Position</h2>
+      <Card><CardContent className="py-12 text-center text-muted-foreground text-sm">No data. Post journal entries in the Journal tab first.</CardContent></Card>
     </div>
   );
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl">Balance Sheet</h2>
-        <p className="text-sm text-muted-foreground">Statement of financial position — Assets = Liabilities + Equity.</p>
+        <h2 className="text-2xl">Statement of Financial Position</h2>
+        <p className="text-sm text-muted-foreground">Balance sheet as at current date — IAS 1 format.</p>
       </div>
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Assets */}
+        {/* ── ASSETS ── */}
         <Card>
-          <CardHeader><CardTitle className="text-base">Assets</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm uppercase tracking-wider">Assets</CardTitle></CardHeader>
           <CardContent>
-            <table className="w-full text-sm">
+            <table className="w-full">
               <tbody>
-                <Section title="Current Assets" rows={assetAccounts.filter(a => !["Property, Plant & Equipment","Accumulated Depreciation"].includes(a.name)).map(a => ({ label: a.name, amount: acctBal(a.name) }))} />
-                <Section title="Non-Current Assets" rows={[
-                  { label: "Property, Plant & Equipment", amount: acctBal("Property, Plant & Equipment") },
-                  { label: "Less: Accumulated Depreciation", amount: -acctBal("Accumulated Depreciation") },
-                ]} />
-                <tr className="border-t-2 border-border font-bold text-base">
-                  <td className="pt-3">TOTAL ASSETS</td>
-                  <td className="pt-3 text-right tabular-nums">{fmtTk(totalAssets)}</td>
-                </tr>
+                <SectionHead label="Non-current assets" />
+                <BSRow label="Property, plant and equipment" amount={ppe} indent />
+                <BSRow label="Goodwill" amount={goodwill} indent />
+                <BSRow label="Other intangible assets" amount={intangibles} indent />
+                <BSRow label="Investments in associates and joint ventures" amount={investAssoc} indent />
+                <BSRow label="Biological assets" amount={bioAssets} indent />
+                <BSRow label="Financial assets" amount={ncFinAssets} indent />
+                <BSRow label="Total non-current assets" amount={totalNCA} bold topBorder />
+
+                <SectionHead label="Current assets" />
+                <BSRow label="Inventories" amount={inventories} indent />
+                <BSRow label="Trade receivables" amount={tradeRec} indent />
+                <BSRow label="Cash and cash equivalents" amount={cash} indent />
+                <BSRow label="Assets classified as held for sale" amount={heldForSale} indent />
+                <BSRow label="Total current assets" amount={totalCA} bold topBorder />
+
+                <BSRow label="Total assets" amount={totalAssets} bold topBorder doubleBorder />
               </tbody>
             </table>
           </CardContent>
         </Card>
 
-        {/* Liabilities + Equity */}
+        {/* ── EQUITY & LIABILITIES ── */}
         <Card>
-          <CardHeader><CardTitle className="text-base">Liabilities & Equity</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm uppercase tracking-wider">Equity and Liabilities</CardTitle></CardHeader>
           <CardContent>
-            <table className="w-full text-sm">
+            <table className="w-full">
               <tbody>
-                <Section title="Current Liabilities" rows={liabAccounts.map(a => ({ label: a.name, amount: acctBal(a.name) }))} />
-                <tr><td colSpan={2} className="pt-5 pb-1 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Owner's Equity</td></tr>
-                <tr className="border-b border-border/30"><td className="py-1.5 pl-4">Owner's Capital</td><td className="py-1.5 text-right tabular-nums">{fmtTk(capital)}</td></tr>
-                <tr className="border-b border-border/30"><td className="py-1.5 pl-4">Add: Net Income</td><td className="py-1.5 text-right tabular-nums">{fmtTk(netIncome)}</td></tr>
-                <tr className="border-b border-border/30"><td className="py-1.5 pl-4">Less: Drawings</td><td className="py-1.5 text-right tabular-nums text-rose-500">({fmtTk(drawings)})</td></tr>
-                <tr className="font-semibold border-t border-border"><td className="py-2">Total Equity</td><td className="py-2 text-right tabular-nums">{fmtTk(totalEquity)}</td></tr>
-                <tr className="border-t-2 border-border font-bold text-base">
-                  <td className="pt-3">TOTAL LIABILITIES & EQUITY</td>
-                  <td className="pt-3 text-right tabular-nums">{fmtTk(totalLiabEquity)}</td>
-                </tr>
-                <tr>
-                  <td colSpan={2} className={`pt-2 text-xs text-right ${isBalanced ? "text-emerald-500" : "text-rose-500"}`}>
-                    {isBalanced ? "✓ Balance sheet agrees" : `✗ Difference: ${fmtTk(Math.abs(totalAssets - totalLiabEquity))}`}
-                  </td>
-                </tr>
+                <SectionHead label="Equity attributable to owners" />
+                <BSRow label="Share capital / Owner's capital" amount={shareCapital} indent />
+                <BSRow label="Retained earnings" amount={retained} indent />
+                <BSRow label="Other components of equity" amount={otherEquity} indent />
+                <BSRow label="Non-controlling interests" amount={nci} indent />
+                <BSRow label="Total equity" amount={totalEquity} bold topBorder />
+
+                <SectionHead label="Non-current liabilities" />
+                <BSRow label="Borrowings" amount={ncBorrowings} indent />
+                <BSRow label="Provisions" amount={ncProvisions} indent />
+                <BSRow label="Deferred tax liabilities and assets" amount={deferredTax} indent />
+                <BSRow label="Financial liabilities" amount={ncFinLiab} indent />
+                <BSRow label="Total non-current liabilities" amount={totalNCL} bold topBorder />
+
+                <SectionHead label="Current liabilities" />
+                <BSRow label="Payables for goods or services and other payables" amount={tradePayables} indent />
+                <BSRow label="Provisions" amount={cProvisions} indent />
+                <BSRow label="Income taxes payable" amount={currentTax} indent />
+                <BSRow label="Financial liabilities (current)" amount={cFinLiab} indent />
+                <BSRow label="Liabilities in disposal groups held for sale" amount={disposalLiab} indent />
+                <BSRow label="Total current liabilities" amount={totalCL} bold topBorder />
+
+                <BSRow label="Total liabilities" amount={totalLiab} bold topBorder />
+                <BSRow label="Total equity and liabilities" amount={totalEL} bold topBorder doubleBorder />
+
+                <tr><td colSpan={2} className={`pt-2 text-xs text-right ${isBalanced ? "text-emerald-500" : "text-rose-500"}`}>
+                  {isBalanced ? "✓ Balance sheet agrees" : `✗ Difference: ${fmtTk(Math.abs(totalAssets - totalEL))}`}
+                </td></tr>
               </tbody>
             </table>
           </CardContent>

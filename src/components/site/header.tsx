@@ -7,7 +7,7 @@ import { TactifinLogo } from "./tactifin-logo";
 import { AuthDialog } from "./auth-dialog";
 
 const NAV = [
-  { label: "Platform", href: "#app" },
+  { label: "Platform", href: "/app" },
   { label: "Features", href: "#features" },
   { label: "FAQ", href: "#faq" },
 ];
@@ -42,14 +42,6 @@ export function SiteHeader() {
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
           <Button
-            variant="outline"
-            size="sm"
-            className="hidden rounded-full md:inline-flex"
-            asChild
-          >
-            <a href="#app">Open App</a>
-          </Button>
-          <Button
             variant="default"
             size="sm"
             className="hidden rounded-full md:inline-flex"
@@ -80,10 +72,7 @@ export function SiteHeader() {
                 {n.label}
               </a>
             ))}
-            <Button className="mt-2 rounded-full" asChild>
-              <a href="#app" onClick={() => setOpen(false)}>Open App</a>
-            </Button>
-            <Button className="rounded-full" onClick={() => { setOpen(false); setAuthOpen(true); }}>
+            <Button className="mt-2 rounded-full" onClick={() => { setOpen(false); setAuthOpen(true); }}>
               Sign in
             </Button>
           </div>
