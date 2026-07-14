@@ -19,7 +19,7 @@ export function SiteFooter() {
           <div>
             <div className="text-xs uppercase tracking-wider text-muted-foreground">Platform</div>
             <ul className="mt-4 space-y-2 text-sm">
-              <li><a href="#app" className="text-foreground/70 transition-smooth hover:text-foreground">Workspace</a></li>
+              <li><a href="/app" className="text-foreground/70 transition-smooth hover:text-foreground">Workspace</a></li>
               <li><a href="#features" className="text-foreground/70 transition-smooth hover:text-foreground">Features</a></li>
               <li><a href="#faq" className="text-foreground/70 transition-smooth hover:text-foreground">FAQ</a></li>
             </ul>
