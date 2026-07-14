@@ -43,6 +43,14 @@ export function SiteHeader() {
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
           <Button
+            variant="outline"
+            size="sm"
+            className="hidden rounded-full md:inline-flex"
+            asChild
+          >
+            <Link to="/app">Open App</Link>
+          </Button>
+          <Button
             variant="default"
             size="sm"
             className="hidden rounded-full md:inline-flex"
@@ -73,7 +81,10 @@ export function SiteHeader() {
                 {n.label}
               </a>
             ))}
-            <Button className="mt-2 rounded-full" onClick={() => { setOpen(false); setAuthOpen(true); }}>
+            <Button className="mt-2 rounded-full" asChild>
+              <Link to="/app" onClick={() => setOpen(false)}>Open App</Link>
+            </Button>
+            <Button className="rounded-full" onClick={() => { setOpen(false); setAuthOpen(true); }}>
               Sign in
             </Button>
           </div>
