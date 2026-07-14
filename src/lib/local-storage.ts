@@ -148,3 +148,97 @@ export function updateBSLineItem(id: string, amount: number): void {
 export function resetBSLineItems(): void {
   save(KEYS.balance_sheet, DEFAULT_BS.map(i => ({ ...i, amount: 0 })));
 }
+
+// ── Accounting ──────────────────────────────────────────────────────────────
+
+const ACCT_KEYS = {
+  journal: "tf_journal",
+  accounts: "tf_accounts",
+};
+
+export type EntryLine = { accountName: string; debit: number; credit: number };
+
+export interface JournalEntry {
+  id: string;
+  date: string;
+  narration: string;
+  lines: EntryLine[];
+  created_at: string;
+}
+
+export interface Account {
+  id: string;
+  name: string;
+  type: "asset" | "liability" | "equity" | "revenue" | "expense";
+  normal: "debit" | "credit"; // normal balance side
+}
+
+const DEFAULT_ACCOUNTS: Account[] = [
+  { id: "cash",         name: "Cash",                              type: "asset",    normal: "debit" },
+  { id: "bank",         name: "Bank",                             type: "asset",    normal: "debit" },
+  { id: "ar",           name: "Accounts Receivable",              type: "asset",    normal: "debit" },
+  { id: "inventory",    name: "Inventory",                        type: "asset",    normal: "debit" },
+  { id: "prepaid",      name: "Prepaid Expenses",                 type: "asset",    normal: "debit" },
+  { id: "ppe",          name: "Property, Plant & Equipment",      type: "asset",    normal: "debit" },
+  { id: "acc_dep",      name: "Accumulated Depreciation",         type: "asset",    normal: "credit" },
+  { id: "ap",           name: "Accounts Payable",                 type: "liability",normal: "credit" },
+  { id: "loan",         name: "Bank Loan",                        type: "liability",normal: "credit" },
+  { id: "accrued",      name: "Accrued Liabilities",              type: "liability",normal: "credit" },
+  { id: "capital",      name: "Owner's Capital",                  type: "equity",   normal: "credit" },
+  { id: "drawings",     name: "Owner's Drawings",                 type: "equity",   normal: "debit" },
+  { id: "sales",        name: "Sales Revenue",                    type: "revenue",  normal: "credit" },
+  { id: "sales_ret",    name: "Sales Returns",                    type: "revenue",  normal: "debit" },
+  { id: "purchases",    name: "Purchases",                        type: "expense",  normal: "debit" },
+  { id: "purch_ret",    name: "Purchase Returns",                 type: "expense",  normal: "credit" },
+  { id: "rent_exp",     name: "Rent Expense",                     type: "expense",  normal: "debit" },
+  { id: "salary_exp",   name: "Salary Expense",                   type: "expense",  normal: "debit" },
+  { id: "util_exp",     name: "Utilities Expense",                type: "expense",  normal: "debit" },
+  { id: "dep_exp",      name: "Depreciation Expense",             type: "expense",  normal: "debit" },
+  { id: "interest_exp", name: "Interest Expense",                 type: "expense",  normal: "debit" },
+  { id: "adv_exp",      name: "Advertising Expense",              type: "expense",  normal: "debit" },
+  { id: "misc_exp",     name: "Miscellaneous Expense",            type: "expense",  normal: "debit" },
+];
+
+export function getAccounts(): Account[] {
+  const stored = load<Account>(ACCT_KEYS.accounts);
+  if (stored.length === 0) { save(ACCT_KEYS.accounts, DEFAULT_ACCOUNTS); return DEFAULT_ACCOUNTS; }
+  return stored;
+}
+export function addAccount(a: Omit<Account, "id">): Account {
+  const item: Account = { ...a, id: randomId() };
+  const all = getAccounts(); all.push(item); save(ACCT_KEYS.accounts, all); return item;
+}
+export function deleteAccount(id: string): void {
+  save(ACCT_KEYS.accounts, getAccounts().filter(a => a.id !== id));
+}
+
+export function getJournalEntries(): JournalEntry[] {
+  return load<JournalEntry>(ACCT_KEYS.journal).sort((a, b) => b.date.localeCompare(a.date));
+}
+export function addJournalEntry(e: Omit<JournalEntry, "id" | "created_at">): JournalEntry {
+  const item: JournalEntry = { ...e, id: randomId(), created_at: new Date().toISOString() };
+  const all = load<JournalEntry>(ACCT_KEYS.journal); all.push(item); save(ACCT_KEYS.journal, all); return item;
+}
+export function deleteJournalEntry(id: string): void {
+  save(ACCT_KEYS.journal, getJournalEntries().filter(e => e.id !== id));
+}
+
+// Compute ledger balances from journal entries
+export interface LedgerBalance { accountName: string; debit: number; credit: number; balance: number; normal: "debit" | "credit" }
+
+export function computeLedger(entries: JournalEntry[], accounts: Account[]): LedgerBalance[] {
+  const map: Record<string, { debit: number; credit: number }> = {};
+  for (const entry of entries) {
+    for (const line of entry.lines) {
+      if (!map[line.accountName]) map[line.accountName] = { debit: 0, credit: 0 };
+      map[line.accountName].debit  += line.debit;
+      map[line.accountName].credit += line.credit;
+    }
+  }
+  return Object.entries(map).map(([name, { debit, credit }]) => {
+    const acct = accounts.find(a => a.name === name);
+    const normal = acct?.normal ?? "debit";
+    const balance = normal === "debit" ? debit - credit : credit - debit;
+    return { accountName: name, debit, credit, balance, normal };
+  }).sort((a, b) => a.accountName.localeCompare(b.accountName));
+}

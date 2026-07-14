@@ -9,7 +9,6 @@ import { AuthDialog } from "./auth-dialog";
 const NAV = [
   { label: "Platform", href: "#app" },
   { label: "Features", href: "#features" },
-  { label: "Partners", href: "#partners" },
   { label: "FAQ", href: "#faq" },
 ];
 
@@ -48,7 +47,7 @@ export function SiteHeader() {
             className="hidden rounded-full md:inline-flex"
             asChild
           >
-            <Link to="/app">Open App</Link>
+            <a href="#app">Open App</a>
           </Button>
           <Button
             variant="default"
@@ -82,7 +81,7 @@ export function SiteHeader() {
               </a>
             ))}
             <Button className="mt-2 rounded-full" asChild>
-              <Link to="/app" onClick={() => setOpen(false)}>Open App</Link>
+              <a href="#app" onClick={() => setOpen(false)}>Open App</a>
             </Button>
             <Button className="rounded-full" onClick={() => { setOpen(false); setAuthOpen(true); }}>
               Sign in

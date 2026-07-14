@@ -5,8 +5,11 @@ import {
   getBudgets, upsertBudget, deleteBudget,
   getGoals, addGoal, updateGoal, deleteGoal,
   getBills, addBill, updateBill, deleteBill,
+  getAccounts, addAccount, deleteAccount,
+  getJournalEntries, addJournalEntry, deleteJournalEntry,
+  computeLedger,
 } from "@/lib/local-storage";
-import type { Transaction, Budget, Goal, Bill, TxnType } from "@/lib/local-storage";
+import type { Transaction, Budget, Goal, Bill, TxnType, Account, JournalEntry, EntryLine } from "@/lib/local-storage";
 import { CATEGORIES, detectHaram, autoCategorize } from "@/lib/haram";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +23,7 @@ import {
   LayoutDashboard, Receipt, Target, Wallet, CreditCard, Calculator,
   ShieldCheck, Bot, RotateCcw, Trash2, Pencil, TrendingUp, TrendingDown,
   AlertTriangle, Sparkles, Newspaper, BookOpen, Send, User,
-  ExternalLink, Lightbulb, Clock, ArrowRight,
+  ExternalLink, Lightbulb, Clock, ArrowRight, BookMarked, Scale, FileText, BarChart2, Plus, X,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -30,20 +33,26 @@ import { cn } from "@/lib/utils";
 
 type TabId =
   | "dashboard" | "transactions" | "goals" | "budgets" | "bills"
-  | "rewinder" | "calculators" | "compliance" | "chat" | "news" | "learn";
+  | "rewinder" | "calculators" | "compliance" | "chat" | "news" | "learn"
+  | "journal" | "ledger" | "trial-balance" | "income-statement" | "balance-sheet";
 
 const TABS: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "transactions", label: "Transactions", icon: Receipt },
-  { id: "goals", label: "Goals", icon: Target },
-  { id: "budgets", label: "Budgets", icon: Wallet },
-  { id: "bills", label: "Bill Pay", icon: CreditCard },
-  { id: "rewinder", label: "Rewinder", icon: RotateCcw },
-  { id: "calculators", label: "Calculators", icon: Calculator },
-  { id: "compliance", label: "Compliance", icon: ShieldCheck },
-  { id: "chat", label: "AI Assistant", icon: Bot },
-  { id: "news", label: "Tips & News", icon: Newspaper },
-  { id: "learn", label: "Learning", icon: BookOpen },
+  { id: "dashboard",        label: "Dashboard",        icon: LayoutDashboard },
+  { id: "transactions",     label: "Transactions",     icon: Receipt },
+  { id: "journal",          label: "Journal",          icon: BookMarked },
+  { id: "ledger",           label: "Ledger",           icon: Scale },
+  { id: "trial-balance",    label: "Trial Balance",    icon: FileText },
+  { id: "income-statement", label: "Income Statement", icon: TrendingUp },
+  { id: "balance-sheet",    label: "Balance Sheet",    icon: BarChart2 },
+  { id: "goals",            label: "Goals",            icon: Target },
+  { id: "budgets",          label: "Budgets",          icon: Wallet },
+  { id: "bills",            label: "Bill Pay",         icon: CreditCard },
+  { id: "rewinder",         label: "Rewinder",         icon: RotateCcw },
+  { id: "calculators",      label: "Calculators",      icon: Calculator },
+  { id: "compliance",       label: "Compliance",       icon: ShieldCheck },
+  { id: "chat",             label: "AI Assistant",     icon: Bot },
+  { id: "news",             label: "Tips & News",      icon: Newspaper },
+  { id: "learn",            label: "Learning",         icon: BookOpen },
 ];
 
 function fmt(n: number) {
@@ -101,6 +110,11 @@ export function AppDashboard() {
           <div className="p-4 md:p-8 min-h-[500px]">
             {tab === "dashboard" && <DashboardPanel />}
             {tab === "transactions" && <TransactionsPanel />}
+            {tab === "journal" && <JournalPanel />}
+            {tab === "ledger" && <LedgerPanel />}
+            {tab === "trial-balance" && <TrialBalancePanel />}
+            {tab === "income-statement" && <IncomeStatementPanel />}
+            {tab === "balance-sheet" && <BalanceSheetPanel />}
             {tab === "goals" && <GoalsPanel />}
             {tab === "budgets" && <BudgetsPanel />}
             {tab === "bills" && <BillsPanel />}
@@ -1009,9 +1023,6 @@ function NewsPanel() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--brand-bolt)]/10">
                   <tip.icon className="h-5 w-5 text-[color:var(--brand-bolt)]" />
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Clock className="h-3 w-3" /> {tip.readTime}
-                </div>
               </div>
               <CardTitle className="mt-3 text-lg">{tip.title}</CardTitle>
               <div className="text-xs text-[color:var(--brand-bolt)]">{tip.category}</div>
@@ -1239,9 +1250,6 @@ function CourseModal({ course, onClose }: { course: Course; onClose: () => void 
             </div>
             <div>
               <DialogTitle className="text-lg leading-snug">{course.title}</DialogTitle>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                <span>{course.lessons} topics</span>
-              </div>
             </div>
           </div>
         </DialogHeader>
@@ -1285,9 +1293,6 @@ function LearnPanel() {
                 <course.icon className="h-5 w-5 text-[color:var(--brand-bolt)]" />
               </div>
               <CardTitle className="mt-3 text-base">{course.title}</CardTitle>
-              <div className="text-xs text-muted-foreground">
-                <span>{course.lessons} topics</span>
-              </div>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">{course.description}</p>
@@ -1300,6 +1305,509 @@ function LearnPanel() {
       </div>
 
       {activeCourse && <CourseModal course={activeCourse} onClose={() => setActiveCourse(null)} />}
+    </div>
+  );
+}
+
+/* ── helpers ── */
+function fmtTk(n: number) {
+  return new Intl.NumberFormat("en-BD", { minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(n);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   JOURNAL PANEL
+══════════════════════════════════════════════════════════════ */
+function JournalPanel() {
+  const qc = useQueryClient();
+  const { data: entries = [] } = useQuery({ queryKey: ["journal"], queryFn: getJournalEntries });
+  const { data: accounts = [] } = useQuery({ queryKey: ["accounts"], queryFn: getAccounts });
+
+  const [open, setOpen] = useState(false);
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [narration, setNarration] = useState("");
+  const [lines, setLines] = useState<EntryLine[]>([
+    { accountName: "", debit: 0, credit: 0 },
+    { accountName: "", debit: 0, credit: 0 },
+  ]);
+
+  const addMut = useMutation({
+    mutationFn: () => {
+      const filled = lines.filter(l => l.accountName && (l.debit > 0 || l.credit > 0));
+      const totalDr = filled.reduce((s, l) => s + l.debit, 0);
+      const totalCr = filled.reduce((s, l) => s + l.credit, 0);
+      if (Math.abs(totalDr - totalCr) > 0.001) throw new Error("Debits must equal credits");
+      if (filled.length < 2) throw new Error("Need at least 2 lines");
+      addJournalEntry({ date, narration, lines: filled });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["journal"] });
+      setOpen(false); setNarration(""); setDate(new Date().toISOString().slice(0, 10));
+      setLines([{ accountName: "", debit: 0, credit: 0 }, { accountName: "", debit: 0, credit: 0 }]);
+      toast.success("Journal entry added");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const delMut = useMutation({
+    mutationFn: (id: string) => { deleteJournalEntry(id); },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["journal"] }),
+  });
+
+  function setLine(i: number, field: keyof EntryLine, val: string | number) {
+    setLines(prev => prev.map((l, idx) => idx === i ? { ...l, [field]: val } : l));
+  }
+  function addLine() { setLines(prev => [...prev, { accountName: "", debit: 0, credit: 0 }]); }
+  function removeLine(i: number) { setLines(prev => prev.filter((_, idx) => idx !== i)); }
+
+  const totalDr = lines.reduce((s, l) => s + (l.debit || 0), 0);
+  const totalCr = lines.reduce((s, l) => s + (l.credit || 0), 0);
+  const balanced = Math.abs(totalDr - totalCr) < 0.001 && totalDr > 0;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl">General Journal</h2>
+          <p className="text-sm text-muted-foreground">Double-entry journal entries. Debits must equal credits.</p>
+        </div>
+        <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-1" /> New entry</Button>
+      </div>
+
+      {entries.length === 0 ? (
+        <Card><CardContent className="py-12 text-center text-muted-foreground text-sm">No journal entries yet. Click "New entry" to start.</CardContent></Card>
+      ) : (
+        <div className="space-y-3">
+          {entries.map(e => {
+            const dr = e.lines.reduce((s, l) => s + l.debit, 0);
+            return (
+              <Card key={e.id}>
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-xs text-muted-foreground font-mono">{e.date}</span>
+                        <span className="text-sm font-medium">{e.narration || "—"}</span>
+                      </div>
+                      <table className="w-full text-sm">
+                        <thead><tr className="text-xs text-muted-foreground"><th className="text-left pb-1 w-1/2">Account</th><th className="text-right pb-1 w-1/4">Dr</th><th className="text-right pb-1 w-1/4">Cr</th></tr></thead>
+                        <tbody>
+                          {e.lines.map((l, i) => (
+                            <tr key={i}>
+                              <td className={l.debit > 0 ? "" : "pl-4 text-muted-foreground"}>{l.accountName}</td>
+                              <td className="text-right tabular-nums">{l.debit > 0 ? fmtTk(l.debit) : ""}</td>
+                              <td className="text-right tabular-nums text-muted-foreground">{l.credit > 0 ? fmtTk(l.credit) : ""}</td>
+                            </tr>
+                          ))}
+                          <tr className="border-t border-border/60 font-semibold text-xs">
+                            <td>Total</td><td className="text-right tabular-nums">{fmtTk(dr)}</td><td className="text-right tabular-nums">{fmtTk(dr)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <button onClick={() => delMut.mutate(e.id)} className="text-muted-foreground hover:text-destructive shrink-0 mt-1"><Trash2 className="h-4 w-4" /></button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>New Journal Entry</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Date</Label><Input type="date" className="mt-1" value={date} onChange={e => setDate(e.target.value)} /></div>
+              <div><Label>Narration</Label><Input className="mt-1" placeholder="e.g. Cash received from sales" value={narration} onChange={e => setNarration(e.target.value)} /></div>
+            </div>
+            <div>
+              <div className="grid grid-cols-[1fr_100px_100px_32px] gap-2 text-xs text-muted-foreground pb-1">
+                <span>Account</span><span className="text-right">Debit (Tk.)</span><span className="text-right">Credit (Tk.)</span><span />
+              </div>
+              {lines.map((l, i) => (
+                <div key={i} className="grid grid-cols-[1fr_100px_100px_32px] gap-2 mb-2">
+                  <select value={l.accountName} onChange={e => setLine(i, "accountName", e.target.value)}
+                    className="h-9 rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring">
+                    <option value="">Select account</option>
+                    {accounts.map(a => <option key={a.id} value={a.name}>{a.name}</option>)}
+                  </select>
+                  <Input type="number" min="0" step="0.001" className="text-right" value={l.debit || ""} onChange={e => setLine(i, "debit", parseFloat(e.target.value) || 0)} />
+                  <Input type="number" min="0" step="0.001" className="text-right" value={l.credit || ""} onChange={e => setLine(i, "credit", parseFloat(e.target.value) || 0)} />
+                  <button onClick={() => removeLine(i)} className="text-muted-foreground hover:text-destructive"><X className="h-4 w-4" /></button>
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={addLine}><Plus className="h-3.5 w-3.5 mr-1" /> Add line</Button>
+            </div>
+            <div className={`flex justify-between text-sm font-medium px-1 ${balanced ? "text-emerald-500" : "text-rose-500"}`}>
+              <span>Total Dr: {fmtTk(totalDr)}</span>
+              <span>Total Cr: {fmtTk(totalCr)}</span>
+              <span>{balanced ? "✓ Balanced" : "✗ Not balanced"}</span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button onClick={() => addMut.mutate()} disabled={addMut.isPending || !balanced}>
+              {addMut.isPending ? "Saving…" : "Post entry"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LEDGER PANEL
+══════════════════════════════════════════════════════════════ */
+function LedgerPanel() {
+  const { data: entries = [] } = useQuery({ queryKey: ["journal"], queryFn: getJournalEntries });
+  const { data: accounts = [] } = useQuery({ queryKey: ["accounts"], queryFn: getAccounts });
+  const [selected, setSelected] = useState<string>("all");
+
+  // Build per-account ledger lines
+  const allAccountNames = useMemo(() => {
+    const names = new Set<string>();
+    entries.forEach(e => e.lines.forEach(l => names.add(l.accountName)));
+    return Array.from(names).sort();
+  }, [entries]);
+
+  const ledgerData = useMemo(() => {
+    const map: Record<string, { date: string; narration: string; debit: number; credit: number; runBal: number }[]> = {};
+    const running: Record<string, number> = {};
+    const acctNormal: Record<string, "debit" | "credit"> = {};
+    accounts.forEach(a => { acctNormal[a.name] = a.normal; });
+
+    const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date));
+    for (const entry of sorted) {
+      for (const line of entry.lines) {
+        if (!map[line.accountName]) { map[line.accountName] = []; running[line.accountName] = 0; }
+        const normal = acctNormal[line.accountName] ?? "debit";
+        running[line.accountName] += normal === "debit" ? line.debit - line.credit : line.credit - line.debit;
+        map[line.accountName].push({ date: entry.date, narration: entry.narration, debit: line.debit, credit: line.credit, runBal: running[line.accountName] });
+      }
+    }
+    return map;
+  }, [entries, accounts]);
+
+  const displayNames = selected === "all" ? allAccountNames : [selected];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-2xl">General Ledger</h2>
+          <p className="text-sm text-muted-foreground">Running balance per account, derived from journal entries.</p>
+        </div>
+        <select value={selected} onChange={e => setSelected(e.target.value)}
+          className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring">
+          <option value="all">All accounts</option>
+          {allAccountNames.map(n => <option key={n} value={n}>{n}</option>)}
+        </select>
+      </div>
+
+      {allAccountNames.length === 0 ? (
+        <Card><CardContent className="py-12 text-center text-muted-foreground text-sm">No journal entries yet. Post entries in the Journal tab to see ledger accounts.</CardContent></Card>
+      ) : (
+        displayNames.map(name => {
+          const lines = ledgerData[name] ?? [];
+          const acct = accounts.find(a => a.name === name);
+          const lastBal = lines[lines.length - 1]?.runBal ?? 0;
+          return (
+            <Card key={name}>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center justify-between text-base">
+                  <span>{name}</span>
+                  <span className={`text-sm font-medium ${lastBal >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+                    Balance: {fmtTk(Math.abs(lastBal))} {lastBal >= 0 ? (acct?.normal === "credit" ? "Cr" : "Dr") : (acct?.normal === "credit" ? "Dr" : "Cr")}
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <table className="w-full text-sm">
+                  <thead><tr className="text-xs text-muted-foreground border-b border-border"><th className="text-left pb-2 w-24">Date</th><th className="text-left pb-2">Particulars</th><th className="text-right pb-2 w-28">Debit</th><th className="text-right pb-2 w-28">Credit</th><th className="text-right pb-2 w-28">Balance</th></tr></thead>
+                  <tbody>
+                    {lines.map((l, i) => (
+                      <tr key={i} className="border-b border-border/40">
+                        <td className="py-1.5 text-muted-foreground text-xs font-mono">{l.date}</td>
+                        <td className="py-1.5">{l.narration || "—"}</td>
+                        <td className="py-1.5 text-right tabular-nums">{l.debit > 0 ? fmtTk(l.debit) : "—"}</td>
+                        <td className="py-1.5 text-right tabular-nums text-muted-foreground">{l.credit > 0 ? fmtTk(l.credit) : "—"}</td>
+                        <td className={`py-1.5 text-right tabular-nums font-medium ${l.runBal >= 0 ? "" : "text-rose-500"}`}>{fmtTk(Math.abs(l.runBal))}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </CardContent>
+            </Card>
+          );
+        })
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TRIAL BALANCE PANEL
+══════════════════════════════════════════════════════════════ */
+function TrialBalancePanel() {
+  const { data: entries = [] } = useQuery({ queryKey: ["journal"], queryFn: getJournalEntries });
+  const { data: accounts = [] } = useQuery({ queryKey: ["accounts"], queryFn: getAccounts });
+
+  const balances = useMemo(() => computeLedger(entries, accounts), [entries, accounts]);
+
+  const totalDr = balances.reduce((s, b) => s + (b.normal === "debit" ? Math.max(0, b.balance) : Math.max(0, -b.balance)), 0);
+  const totalCr = balances.reduce((s, b) => s + (b.normal === "credit" ? Math.max(0, b.balance) : Math.max(0, -b.balance)), 0);
+  const isBalanced = Math.abs(totalDr - totalCr) < 0.001;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl">Trial Balance</h2>
+        <p className="text-sm text-muted-foreground">Closing balances of all accounts. Total debits must equal total credits.</p>
+      </div>
+
+      {balances.length === 0 ? (
+        <Card><CardContent className="py-12 text-center text-muted-foreground text-sm">No data. Post journal entries first.</CardContent></Card>
+      ) : (
+        <Card>
+          <CardContent className="pt-4">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-xs text-muted-foreground border-b border-border">
+                  <th className="text-left pb-3">Account Name</th>
+                  <th className="text-right pb-3 w-36">Debit (Tk.)</th>
+                  <th className="text-right pb-3 w-36">Credit (Tk.)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {balances.map((b) => {
+                  const isDebitBal = b.balance >= 0 ? b.normal === "debit" : b.normal === "credit";
+                  return (
+                    <tr key={b.accountName} className="border-b border-border/40">
+                      <td className="py-2">{b.accountName}</td>
+                      <td className="py-2 text-right tabular-nums">{isDebitBal ? fmtTk(Math.abs(b.balance)) : "—"}</td>
+                      <td className="py-2 text-right tabular-nums text-muted-foreground">{!isDebitBal ? fmtTk(Math.abs(b.balance)) : "—"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-border font-semibold">
+                  <td className="pt-3">Total</td>
+                  <td className="pt-3 text-right tabular-nums">{fmtTk(totalDr)}</td>
+                  <td className="pt-3 text-right tabular-nums">{fmtTk(totalCr)}</td>
+                </tr>
+                <tr>
+                  <td colSpan={3} className={`pt-2 text-xs text-right ${isBalanced ? "text-emerald-500" : "text-rose-500"}`}>
+                    {isBalanced ? "✓ Trial balance agrees" : `✗ Difference: ${fmtTk(Math.abs(totalDr - totalCr))}`}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   INCOME STATEMENT PANEL
+══════════════════════════════════════════════════════════════ */
+function IncomeStatementPanel() {
+  const { data: entries = [] } = useQuery({ queryKey: ["journal"], queryFn: getJournalEntries });
+  const { data: accounts = [] } = useQuery({ queryKey: ["accounts"], queryFn: getAccounts });
+
+  const balances = useMemo(() => computeLedger(entries, accounts), [entries, accounts]);
+
+  const acctBal = (name: string) => balances.find(b => b.accountName === name)?.balance ?? 0;
+
+  // Revenue
+  const sales    = acctBal("Sales Revenue");
+  const salesRet = acctBal("Sales Returns");
+  const netSales = sales - salesRet;
+
+  // Cost of goods sold
+  const purchases = acctBal("Purchases");
+  const purchRet  = acctBal("Purchase Returns");
+  const cogs      = purchases - purchRet;
+  const grossProfit = netSales - cogs;
+
+  // Operating expenses
+  const expenseAccounts = accounts.filter(a => a.type === "expense" && !["Purchases", "Purchase Returns"].includes(a.name));
+  const opExpenses = expenseAccounts.map(a => ({ name: a.name, amount: acctBal(a.name) })).filter(e => e.amount !== 0);
+  const totalOpExp = opExpenses.reduce((s, e) => s + e.amount, 0);
+  const operatingIncome = grossProfit - totalOpExp;
+
+  // Other expenses
+  const interestExp = acctBal("Interest Expense");
+  const netIncome = operatingIncome - interestExp;
+
+  if (balances.length === 0) return (
+    <div className="space-y-4">
+      <h2 className="text-2xl">Income Statement</h2>
+      <Card><CardContent className="py-12 text-center text-muted-foreground text-sm">No data. Post journal entries first.</CardContent></Card>
+    </div>
+  );
+
+  function Row({ label, amount, indent = false, bold = false, borderTop = false }: { label: string; amount: number; indent?: boolean; bold?: boolean; borderTop?: boolean }) {
+    return (
+      <tr className={borderTop ? "border-t border-border" : ""}>
+        <td className={`py-1.5 ${indent ? "pl-6" : ""} ${bold ? "font-semibold" : ""}`}>{label}</td>
+        <td className={`py-1.5 text-right tabular-nums w-36 ${bold ? "font-semibold" : ""} ${amount < 0 ? "text-rose-500" : ""}`}>
+          {amount < 0 ? `(${fmtTk(Math.abs(amount))})` : fmtTk(amount)}
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl">Income Statement</h2>
+        <p className="text-sm text-muted-foreground">Profit and loss for the current period.</p>
+      </div>
+      <Card>
+        <CardContent className="pt-6">
+          <table className="w-full text-sm">
+            <tbody>
+              <tr><td colSpan={2} className="text-xs uppercase tracking-wider text-muted-foreground pb-2 font-semibold">Revenue</td></tr>
+              <Row label="Sales" amount={sales} indent />
+              <Row label="Less: Sales Returns" amount={-salesRet} indent />
+              <Row label="Net Sales" amount={netSales} bold borderTop />
+
+              <tr><td colSpan={2} className="pt-4 text-xs uppercase tracking-wider text-muted-foreground pb-2 font-semibold">Cost of Goods Sold</td></tr>
+              <Row label="Purchases" amount={purchases} indent />
+              <Row label="Less: Purchase Returns" amount={-purchRet} indent />
+              <Row label="Net Purchases (COGS)" amount={cogs} bold borderTop />
+              <Row label="Gross Profit" amount={grossProfit} bold borderTop />
+
+              <tr><td colSpan={2} className="pt-4 text-xs uppercase tracking-wider text-muted-foreground pb-2 font-semibold">Operating Expenses</td></tr>
+              {opExpenses.filter(e => e.name !== "Interest Expense").map(e => <Row key={e.name} label={e.name} amount={e.amount} indent />)}
+              <Row label="Total Operating Expenses" amount={totalOpExp - interestExp} bold borderTop />
+              <Row label="Operating Income" amount={operatingIncome + interestExp} bold borderTop />
+
+              {interestExp > 0 && <>
+                <tr><td colSpan={2} className="pt-4 text-xs uppercase tracking-wider text-muted-foreground pb-2 font-semibold">Other Expenses</td></tr>
+                <Row label="Interest Expense" amount={interestExp} indent />
+              </>}
+              <Row label="Net Income / (Loss)" amount={netIncome} bold borderTop />
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BALANCE SHEET PANEL
+══════════════════════════════════════════════════════════════ */
+function BalanceSheetPanel() {
+  const { data: entries = [] } = useQuery({ queryKey: ["journal"], queryFn: getJournalEntries });
+  const { data: accounts = [] } = useQuery({ queryKey: ["accounts"], queryFn: getAccounts });
+  const balances = useMemo(() => computeLedger(entries, accounts), [entries, accounts]);
+
+  const acctBal = (name: string) => balances.find(b => b.accountName === name)?.balance ?? 0;
+
+  const assetAccounts   = accounts.filter(a => a.type === "asset");
+  const liabAccounts    = accounts.filter(a => a.type === "liability");
+  const equityAccounts  = accounts.filter(a => a.type === "equity");
+
+  const totalAssets     = assetAccounts.reduce((s, a) => s + acctBal(a.name), 0);
+  const totalLiab       = liabAccounts.reduce((s, a) => s + acctBal(a.name), 0);
+
+  // Owner's equity = Capital - Drawings + Retained earnings (Net Income)
+  const capital   = acctBal("Owner's Capital");
+  const drawings  = acctBal("Owner's Drawings");
+  const sales     = acctBal("Sales Revenue") - acctBal("Sales Returns");
+  const cogs      = acctBal("Purchases") - acctBal("Purchase Returns");
+  const opExpenses = accounts.filter(a => a.type === "expense" && !["Purchases","Purchase Returns"].includes(a.name)).reduce((s,a) => s + acctBal(a.name), 0);
+  const netIncome = sales - cogs - opExpenses;
+  const totalEquity = capital - drawings + netIncome;
+  const totalLiabEquity = totalLiab + totalEquity;
+  const isBalanced = Math.abs(totalAssets - totalLiabEquity) < 0.001;
+
+  function Section({ title, rows }: { title: string; rows: { label: string; amount: number }[] }) {
+    const total = rows.reduce((s, r) => s + r.amount, 0);
+    return (
+      <>
+        <tr><td colSpan={2} className="pt-5 pb-1 text-xs uppercase tracking-wider text-muted-foreground font-semibold">{title}</td></tr>
+        {rows.filter(r => r.amount !== 0).map(r => (
+          <tr key={r.label} className="border-b border-border/30">
+            <td className="py-1.5 pl-4 text-sm">{r.label}</td>
+            <td className="py-1.5 text-right tabular-nums text-sm w-36">{fmtTk(r.amount)}</td>
+          </tr>
+        ))}
+        <tr className="font-semibold border-t border-border">
+          <td className="py-2">Total {title}</td>
+          <td className="py-2 text-right tabular-nums w-36">{fmtTk(total)}</td>
+        </tr>
+      </>
+    );
+  }
+
+  if (balances.length === 0) return (
+    <div className="space-y-4">
+      <h2 className="text-2xl">Balance Sheet</h2>
+      <Card><CardContent className="py-12 text-center text-muted-foreground text-sm">No data. Post journal entries first.</CardContent></Card>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl">Balance Sheet</h2>
+        <p className="text-sm text-muted-foreground">Statement of financial position — Assets = Liabilities + Equity.</p>
+      </div>
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Assets */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">Assets</CardTitle></CardHeader>
+          <CardContent>
+            <table className="w-full text-sm">
+              <tbody>
+                <Section title="Current Assets" rows={assetAccounts.filter(a => !["Property, Plant & Equipment","Accumulated Depreciation"].includes(a.name)).map(a => ({ label: a.name, amount: acctBal(a.name) }))} />
+                <Section title="Non-Current Assets" rows={[
+                  { label: "Property, Plant & Equipment", amount: acctBal("Property, Plant & Equipment") },
+                  { label: "Less: Accumulated Depreciation", amount: -acctBal("Accumulated Depreciation") },
+                ]} />
+                <tr className="border-t-2 border-border font-bold text-base">
+                  <td className="pt-3">TOTAL ASSETS</td>
+                  <td className="pt-3 text-right tabular-nums">{fmtTk(totalAssets)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+
+        {/* Liabilities + Equity */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">Liabilities & Equity</CardTitle></CardHeader>
+          <CardContent>
+            <table className="w-full text-sm">
+              <tbody>
+                <Section title="Current Liabilities" rows={liabAccounts.map(a => ({ label: a.name, amount: acctBal(a.name) }))} />
+                <tr><td colSpan={2} className="pt-5 pb-1 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Owner's Equity</td></tr>
+                <tr className="border-b border-border/30"><td className="py-1.5 pl-4">Owner's Capital</td><td className="py-1.5 text-right tabular-nums">{fmtTk(capital)}</td></tr>
+                <tr className="border-b border-border/30"><td className="py-1.5 pl-4">Add: Net Income</td><td className="py-1.5 text-right tabular-nums">{fmtTk(netIncome)}</td></tr>
+                <tr className="border-b border-border/30"><td className="py-1.5 pl-4">Less: Drawings</td><td className="py-1.5 text-right tabular-nums text-rose-500">({fmtTk(drawings)})</td></tr>
+                <tr className="font-semibold border-t border-border"><td className="py-2">Total Equity</td><td className="py-2 text-right tabular-nums">{fmtTk(totalEquity)}</td></tr>
+                <tr className="border-t-2 border-border font-bold text-base">
+                  <td className="pt-3">TOTAL LIABILITIES & EQUITY</td>
+                  <td className="pt-3 text-right tabular-nums">{fmtTk(totalLiabEquity)}</td>
+                </tr>
+                <tr>
+                  <td colSpan={2} className={`pt-2 text-xs text-right ${isBalanced ? "text-emerald-500" : "text-rose-500"}`}>
+                    {isBalanced ? "✓ Balance sheet agrees" : `✗ Difference: ${fmtTk(Math.abs(totalAssets - totalLiabEquity))}`}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
