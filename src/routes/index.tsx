@@ -5,7 +5,6 @@ import { AppDashboard } from "@/components/app/app-dashboard";
 import { FeaturesGrid } from "@/components/site/features-grid";
 import { VideoGallery } from "@/components/site/video-gallery";
 import { Testimonials } from "@/components/site/testimonials";
-import { Partners } from "@/components/site/partners";
 import { FAQ } from "@/components/site/faq";
 import { SiteFooter } from "@/components/site/footer";
 
@@ -31,7 +30,6 @@ function Index() {
           <FeaturesGrid />
           <VideoGallery />
           <Testimonials />
-          <Partners />
           <FAQ />
         </main>
         <SiteFooter />
