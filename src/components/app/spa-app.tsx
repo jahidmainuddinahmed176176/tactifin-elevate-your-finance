@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getTransactions, getBudgets, getGoals, getGoals as _getGoals,
@@ -43,7 +43,7 @@ import {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type SectionKey = "dashboard" | "transactions" | "goals" | "budgets" | "bills"
-                | "calculators" | "compliance" | "rewinder" | "news" | "learn" | "ai";
+                | "calculators" | "compliance" | "rewinder" | "news" | "ai";
 type ReportKey  = "journal" | "trial" | "income" | "balance";
 type BillStatus = "upcoming" | "due-today" | "overdue" | "paid";
 type PaymentMethod = "bkash" | "cash_on_delivery" | "other";
@@ -1281,13 +1281,115 @@ function LearnPage() {
 
 // ─── AI Assistant placeholder ─────────────────────────────────────────────────
 function AiAssistantPage() {
+  const [messages, setMessages] = useState<{ role: "user" | "assistant"; text: string }[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
+
+  async function send(e: React.FormEvent) {
+    e.preventDefault();
+    const text = input.trim();
+    if (!text || loading) return;
+    setInput("");
+    setMessages(prev => [...prev, { role: "user", text }]);
+    setLoading(true);
+
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      const apiUrl = import.meta.env.VITE_AI_API_URL;
+      if (!apiKey || !apiUrl) throw new Error("AI API not configured");
+
+      const history = messages.map(m => ({
+        role: m.role === "user" ? "user" : "model",
+        parts: [{ text: m.text }],
+      }));
+
+      const res = await fetch(`${apiUrl}${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: {
+            parts: [{ text: "You are Tactifin AI, a friendly personal-finance assistant. Help with budgeting, expense tracking, Zakat calculation (2.5% on wealth above nisab ~$5,200), Shariah-compliance questions (flag riba/interest, gambling, alcohol), tax estimation, and savings goals. Keep answers concise and practical. Use markdown when useful." }]
+          },
+          contents: [
+            ...history,
+            { role: "user", parts: [{ text }] },
+          ],
+          generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
+        }),
+      });
+
+      if (!res.ok) throw new Error(`API error ${res.status}`);
+      const data = await res.json();
+      const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "Sorry, I couldn't generate a response.";
+      setMessages(prev => [...prev, { role: "assistant", text: reply }]);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "AI request failed");
+      setMessages(prev => [...prev, { role: "assistant", text: "Sorry, something went wrong. Please try again." }]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <div className="space-y-6">
-      <div><h1 className="text-3xl">AI Assistant</h1><p className="text-sm text-muted-foreground">Your personal finance AI — ask anything about your money.</p></div>
-      <Card><CardContent className="flex flex-col items-center gap-4 py-16 text-center">
-        <Bot className="h-12 w-12 text-[color:var(--brand-bolt)]" />
-        <div><p className="font-medium">AI Assistant coming soon</p><p className="text-sm text-muted-foreground mt-1">Smart financial insights powered by AI will be available here.</p></div>
-      </CardContent></Card>
+    <div className="flex flex-col h-[calc(100vh-8rem)]">
+      <div className="mb-4">
+        <h1 className="text-3xl">AI Assistant</h1>
+        <p className="text-sm text-muted-foreground">Ask anything about your finances — budgeting, Zakat, tax, Shariah compliance.</p>
+      </div>
+
+      <Card className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {messages.length === 0 && !loading && (
+            <div className="flex flex-col items-center gap-3 pt-12 text-center text-muted-foreground">
+              <Bot className="h-10 w-10 text-[color:var(--brand-bolt)]" />
+              <p className="text-sm">Ask about budgeting, Zakat, taxes, or whether a transaction is Shariah-compliant.</p>
+            </div>
+          )}
+          {messages.map((m, i) => (
+            <div key={i} className={cn("flex gap-3", m.role === "user" ? "justify-end" : "justify-start")}>
+              {m.role === "assistant" && (
+                <div className="h-8 w-8 shrink-0 rounded-full bg-[color:var(--brand-bolt)]/20 flex items-center justify-center">
+                  <Bot className="h-4 w-4 text-[color:var(--brand-bolt)]" />
+                </div>
+              )}
+              <div className={cn(
+                "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap",
+                m.role === "user" ? "bg-primary text-primary-foreground" : "bg-accent text-foreground",
+              )}>
+                {m.text}
+              </div>
+            </div>
+          ))}
+          {loading && (
+            <div className="flex gap-3">
+              <div className="h-8 w-8 shrink-0 rounded-full bg-[color:var(--brand-bolt)]/20 flex items-center justify-center">
+                <Bot className="h-4 w-4 text-[color:var(--brand-bolt)]" />
+              </div>
+              <div className="rounded-2xl bg-accent px-4 py-2.5 text-sm text-muted-foreground">Thinking…</div>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
+
+        <form onSubmit={send} className="border-t border-border p-3 flex items-end gap-2">
+          <textarea
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(e); } }}
+            placeholder="Ask Tactifin AI…"
+            rows={1}
+            className="flex-1 resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+          <Button type="submit" disabled={loading || !input.trim()} size="icon">
+            <TrendingUp className="h-4 w-4" />
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 }
@@ -1307,7 +1409,6 @@ const NAV: { key: SectionKey; label: string; icon: React.ElementType }[] = [
   { key: "compliance",   label: "Compliance",   icon: ShieldCheck },
   { key: "ai",           label: "AI Assistant", icon: Bot },
   { key: "news",         label: "Tips & News",  icon: Newspaper },
-  { key: "learn",        label: "Learning",     icon: BookOpen },
 ];
 
 const REPORTS: { key: ReportKey; label: string; icon: React.ElementType }[] = [
@@ -1338,7 +1439,6 @@ export function SpaApp() {
     compliance:   <CompliancePage />,
     rewinder:     <RewinderPage setSection={setSection} />,
     news:         <NewsPage />,
-    learn:        <LearnPage />,
     ai:           <AiAssistantPage />,
   };
 
