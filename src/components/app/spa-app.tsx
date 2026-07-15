@@ -43,7 +43,7 @@ import {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type SectionKey = "dashboard" | "transactions" | "goals" | "budgets" | "bills"
-                | "calculators" | "compliance" | "rewinder" | "news" | "ai";
+                | "calculators" | "compliance" | "rewinder" | "news" | "learn" | "ai";
 type ReportKey  = "journal" | "trial" | "income" | "balance";
 type BillStatus = "upcoming" | "due-today" | "overdue" | "paid";
 type PaymentMethod = "bkash" | "cash_on_delivery" | "other";
@@ -1303,27 +1303,35 @@ function AiAssistantPage() {
       const apiUrl = import.meta.env.VITE_AI_API_URL;
       if (!apiKey || !apiUrl) throw new Error("AI API not configured");
 
+      const SYSTEM = "You are Tactifin AI, a friendly personal-finance assistant. Help with budgeting, expense tracking, Zakat calculation (2.5% on wealth above nisab ~$5,200), Shariah-compliance questions (flag riba/interest, gambling, alcohol), tax estimation, and savings goals. Keep answers concise and practical.";
+
       const history = messages.map(m => ({
         role: m.role === "user" ? "user" : "model",
         parts: [{ text: m.text }],
       }));
 
-      const res = await fetch(`${apiUrl}${apiKey}`, {
+      // VITE_AI_API_URL already ends with ?key=, append the key directly
+      const url = `${apiUrl}${apiKey}`;
+
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          system_instruction: {
-            parts: [{ text: "You are Tactifin AI, a friendly personal-finance assistant. Help with budgeting, expense tracking, Zakat calculation (2.5% on wealth above nisab ~$5,200), Shariah-compliance questions (flag riba/interest, gambling, alcohol), tax estimation, and savings goals. Keep answers concise and practical. Use markdown when useful." }]
-          },
           contents: [
+            // Inject system prompt as first user/model turn
+            { role: "user",  parts: [{ text: SYSTEM }] },
+            { role: "model", parts: [{ text: "Understood. I am Tactifin AI, ready to help with your finances." }] },
             ...history,
-            { role: "user", parts: [{ text }] },
+            { role: "user",  parts: [{ text }] },
           ],
-          generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
+          generationConfig: { maxOutputTokens: 800, temperature: 0.7 },
         }),
       });
 
-      if (!res.ok) throw new Error(`API error ${res.status}`);
+      if (!res.ok) {
+        const errBody = await res.text();
+        throw new Error(`API error ${res.status}: ${errBody.slice(0, 120)}`);
+      }
       const data = await res.json();
       const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "Sorry, I couldn't generate a response.";
       setMessages(prev => [...prev, { role: "assistant", text: reply }]);
@@ -1409,6 +1417,7 @@ const NAV: { key: SectionKey; label: string; icon: React.ElementType }[] = [
   { key: "compliance",   label: "Compliance",   icon: ShieldCheck },
   { key: "ai",           label: "AI Assistant", icon: Bot },
   { key: "news",         label: "Tips & News",  icon: Newspaper },
+  { key: "learn",        label: "Learning",     icon: BookOpen },
 ];
 
 const REPORTS: { key: ReportKey; label: string; icon: React.ElementType }[] = [
@@ -1439,6 +1448,7 @@ export function SpaApp() {
     compliance:   <CompliancePage />,
     rewinder:     <RewinderPage setSection={setSection} />,
     news:         <NewsPage />,
+    learn:        <LearnPage />,
     ai:           <AiAssistantPage />,
   };
 
