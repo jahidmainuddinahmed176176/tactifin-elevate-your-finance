@@ -1147,8 +1147,7 @@ function NewsPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm text-muted-foreground leading-relaxed">{item.summary}</p>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{item.readTime} read</span>
+                <div className="flex items-center justify-end text-xs text-muted-foreground">
                   {"date" in item && item.date && <span>{item.date}</span>}
                 </div>
               </CardContent>
@@ -1235,43 +1234,61 @@ function CourseDetail({ course, progressSet, onBack, onCompleteLesson }: { cours
   );
 }
 function LearnPage() {
-  const [selectedCourse, setSelectedCourse] = useState<typeof COURSES[0] | null>(null);
   const [glossarySearch, setGlossarySearch] = useState("");
-  const [progressSet, setProgressSet] = useState<Set<string>>(() => loadLearnProgress());
-  function handleCompleteLesson(courseId: number, lessonIndex: number) {
-    setProgressSet(prev => { const next = new Set(prev); next.add(`${courseId}:${lessonIndex}`); saveLearnProgress(next); return next; });
-  }
-  const totalLessons = COURSES.reduce((a, c) => a + c.lessons, 0);
-  const doneLessons = progressSet.size;
-  const overallPct = totalLessons > 0 ? Math.round((doneLessons / totalLessons) * 100) : 0;
-  const filteredGlossary = GLOSSARY.filter(g => !glossarySearch || g.term.toLowerCase().includes(glossarySearch.toLowerCase()) || g.def.toLowerCase().includes(glossarySearch.toLowerCase()));
 
-  if (selectedCourse) return <div className="space-y-6"><CourseDetail course={selectedCourse} progressSet={progressSet} onBack={() => setSelectedCourse(null)} onCompleteLesson={handleCompleteLesson} /></div>;
+  const filteredGlossary = GLOSSARY.filter(g =>
+    !glossarySearch ||
+    g.term.toLowerCase().includes(glossarySearch.toLowerCase()) ||
+    g.def.toLowerCase().includes(glossarySearch.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-3xl">Learning Resources</h1><p className="text-sm text-muted-foreground">Bite-sized courses to build your financial literacy — from budgeting basics to Islamic finance.</p></div>
-      <Card className="border-[color:var(--brand-bolt)]/30 bg-[color:var(--brand-bolt)]/5">
-        <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2"><Star className="h-4 w-4 text-[color:var(--brand-bolt)]" /><span className="text-sm font-medium">Your learning progress</span></div>
-            <p className="mt-1 text-xs text-muted-foreground">{doneLessons} of {totalLessons} lessons completed across {COURSES.length} courses</p>
-          </div>
-          <div className="sm:w-48 space-y-1"><div className="flex justify-between text-xs text-muted-foreground"><span>Overall</span><span>{overallPct}%</span></div><Progress value={overallPct} className="h-2" /></div>
-        </CardContent>
-      </Card>
+      <div>
+        <h1 className="text-3xl">Learning Resources</h1>
+        <p className="text-sm text-muted-foreground">Courses and financial literacy resources — more coming soon.</p>
+      </div>
+
       <Tabs defaultValue="courses">
-        <TabsList><TabsTrigger value="courses">Courses</TabsTrigger><TabsTrigger value="glossary">Glossary</TabsTrigger></TabsList>
+        <TabsList>
+          <TabsTrigger value="courses">Courses</TabsTrigger>
+          <TabsTrigger value="glossary">Glossary</TabsTrigger>
+        </TabsList>
+
         <TabsContent value="courses" className="mt-4">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {COURSES.map(course => { const completed = course.lessons_list.filter((_, i) => progressSet.has(`${course.id}:${i}`)).length; return <CourseCard key={course.id} course={course} completedLessons={completed} onOpen={() => setSelectedCourse(course)} />; })}
-          </div>
+          <Card>
+            <CardContent className="flex flex-col items-center gap-4 py-16 text-center">
+              <BookOpen className="h-12 w-12 text-muted-foreground/40" />
+              <div>
+                <p className="font-medium text-foreground">No courses yet</p>
+                <p className="text-sm text-muted-foreground mt-1">Courses will appear here once they are added through the admin panel.</p>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
+
         <TabsContent value="glossary" className="mt-4 space-y-4">
-          <div className="relative"><BookOpen className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input placeholder="Search terms…" value={glossarySearch} onChange={e => setGlossarySearch(e.target.value)} className="flex h-9 w-full rounded-lg border border-input bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring" /></div>
+          <div className="relative">
+            <BookOpen className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              placeholder="Search terms…"
+              value={glossarySearch}
+              onChange={e => setGlossarySearch(e.target.value)}
+              className="flex h-9 w-full rounded-lg border border-input bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
           <div className="grid gap-3 md:grid-cols-2">
-            {filteredGlossary.map(g => <Card key={g.term} className="border-border/60"><CardContent className="pt-4 pb-4"><div className="text-sm font-semibold text-[color:var(--brand-bolt)]">{g.term}</div><p className="mt-1 text-sm text-muted-foreground">{g.def}</p></CardContent></Card>)}
-            {filteredGlossary.length === 0 && <p className="text-sm text-muted-foreground col-span-2">No matching terms found.</p>}
+            {filteredGlossary.map(g => (
+              <Card key={g.term} className="border-border/60">
+                <CardContent className="pt-4 pb-4">
+                  <div className="text-sm font-semibold text-[color:var(--brand-bolt)]">{g.term}</div>
+                  <p className="mt-1 text-sm text-muted-foreground">{g.def}</p>
+                </CardContent>
+              </Card>
+            ))}
+            {filteredGlossary.length === 0 && (
+              <p className="text-sm text-muted-foreground col-span-2">No matching terms found.</p>
+            )}
           </div>
         </TabsContent>
       </Tabs>
