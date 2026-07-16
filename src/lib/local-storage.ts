@@ -29,6 +29,8 @@ export interface Transaction {
   id: string;
   type: TxnType;
   amount: number;
+  cash_amount?: number;
+  credit_amount?: number;
   category: string;
   description: string;
   transaction_date: string;
