@@ -52,6 +52,7 @@ function AuthPage() {
         });
         if (error) throw error;
         toast.success("Account created — check your email to confirm.");
+        navigate({ to: "/transactions" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;

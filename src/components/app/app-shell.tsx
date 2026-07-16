@@ -1,13 +1,14 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Receipt, Target, Wallet, Calculator, ShieldCheck, Bot,
   Moon, Sun, Menu, X, CreditCard, RotateCcw, Newspaper, BookOpen,
-  BookOpenCheck, BarChart3, FileText, Scale,
+  BookOpenCheck, BarChart3, FileText, Scale, LogOut,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useTheme } from "@/components/site/theme-provider";
 import { cn } from "@/lib/utils";
 import { TactifinLogo } from "@/components/site/tactifin-logo";
+import { supabase } from "@/integrations/supabase/client";
 import { JournalModal }         from "@/components/reports/journal-modal";
 import { TrialBalanceModal }    from "@/components/reports/trial-balance-modal";
 import { IncomeStatementModal } from "@/components/reports/income-statement-modal";
@@ -39,8 +40,14 @@ const REPORTS: { key: ReportKey; label: string; icon: typeof FileText }[] = [
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: r => r.location.pathname });
   const { theme, toggle } = useTheme();
+  const navigate = useNavigate();
   const [mobile, setMobile]     = useState(false);
   const [report, setReport]     = useState<ReportKey | null>(null);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    navigate({ to: "/auth" });
+  }
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
@@ -93,12 +100,17 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </nav>
 
-        {/* Theme toggle */}
-        <div className="border-t border-border p-3 shrink-0">
+        {/* Theme toggle + Sign out */}
+        <div className="border-t border-border p-3 shrink-0 space-y-0.5">
           <button onClick={toggle}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             {theme === "dark" ? "Light mode" : "Dark mode"}
+          </button>
+          <button onClick={handleSignOut}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">
+            <LogOut className="h-4 w-4" />
+            Sign out
           </button>
         </div>
       </aside>
