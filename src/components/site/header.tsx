@@ -4,7 +4,6 @@ import { Menu, Moon, Sun, X } from "lucide-react";
 import { useTheme } from "./theme-provider";
 import { Button } from "@/components/ui/button";
 import { TactifinLogo } from "./tactifin-logo";
-import { AuthDialog } from "./auth-dialog";
 
 const NAV = [
   { label: "Platform", href: "/app" },
@@ -15,7 +14,6 @@ const NAV = [
 export function SiteHeader() {
   const { theme, toggle } = useTheme();
   const [open, setOpen] = useState(false);
-  const [authOpen, setAuthOpen] = useState(false);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/70 backdrop-blur-xl">
@@ -45,9 +43,9 @@ export function SiteHeader() {
             variant="default"
             size="sm"
             className="hidden rounded-full md:inline-flex"
-            onClick={() => setAuthOpen(true)}
+            asChild
           >
-            Sign in
+            <Link to="/auth">Sign in</Link>
           </Button>
           <button
             onClick={() => setOpen((o) => !o)}
@@ -72,14 +70,12 @@ export function SiteHeader() {
                 {n.label}
               </a>
             ))}
-            <Button className="mt-2 rounded-full" onClick={() => { setOpen(false); setAuthOpen(true); }}>
-              Sign in
+            <Button className="mt-2 rounded-full" asChild>
+              <Link to="/auth" onClick={() => setOpen(false)}>Sign in</Link>
             </Button>
           </div>
         </div>
       )}
-
-      <AuthDialog open={authOpen} onOpenChange={setAuthOpen} />
     </header>
   );
 }

@@ -1,11 +1,8 @@
 import { ArrowUpRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { AuthDialog } from "./auth-dialog";
-import { useState } from "react";
 
 export function Partners() {
-  const [authOpen, setAuthOpen] = useState(false);
-
   return (
     <section id="partners" className="border-t border-border/40 bg-[color:var(--surface-sunken)] py-28">
       <div className="mx-auto max-w-7xl px-6">
@@ -22,8 +19,10 @@ export function Partners() {
                 early access to new modules, co-built integrations, and rewards for every client onboarded.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Button size="lg" className="rounded-full" onClick={() => setAuthOpen(true)}>
-                  Become a partner <ArrowUpRight className="ml-1 h-4 w-4" />
+                <Button size="lg" className="rounded-full" asChild>
+                  <Link to="/auth">
+                    Become a partner <ArrowUpRight className="ml-1 h-4 w-4" />
+                  </Link>
                 </Button>
                 <Button size="lg" variant="ghost" className="rounded-full" asChild>
                   <a href="#faq">Read the program</a>
@@ -45,7 +44,6 @@ export function Partners() {
           </div>
         </div>
       </div>
-      <AuthDialog open={authOpen} onOpenChange={setAuthOpen} />
     </section>
   );
 }
