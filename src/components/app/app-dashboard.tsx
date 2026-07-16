@@ -305,6 +305,7 @@ function TransactionsPanel() {
   const qc = useQueryClient();
   const [type, setType] = useState<TxnType>("expense");
   const [amount, setAmount] = useState("");
+  const [cashAmount, setCashAmount] = useState("");
   const [category, setCategory] = useState<string>("Food");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -313,9 +314,18 @@ function TransactionsPanel() {
   const [editTxn, setEditTxn] = useState<Transaction | null>(null);
   const [editType, setEditType] = useState<TxnType>("expense");
   const [editAmount, setEditAmount] = useState("");
+  const [editCashAmount, setEditCashAmount] = useState("");
   const [editCategory, setEditCategory] = useState("Food");
   const [editDescription, setEditDescription] = useState("");
   const [editDate, setEditDate] = useState("");
+
+  const totalNum = Number(amount) || 0;
+  const cashNum = Number(cashAmount) || 0;
+  const creditNum = totalNum > 0 && cashAmount !== "" ? Math.max(0, totalNum - cashNum) : 0;
+
+  const editTotalNum = Number(editAmount) || 0;
+  const editCashNum = Number(editCashAmount) || 0;
+  const editCreditNum = editTotalNum > 0 && editCashAmount !== "" ? Math.max(0, editTotalNum - editCashNum) : 0;
 
   const { data: txns = [] } = useQuery({ queryKey: ["transactions"], queryFn: () => getTransactions() });
 
@@ -323,11 +333,16 @@ function TransactionsPanel() {
     mutationFn: () => {
       const finalCategory = autoCat && description.trim() ? autoCategorize(description) : category;
       const haram = detectHaram(`${finalCategory} ${description}`);
-      addTransaction({ type, amount: Number(amount), category: finalCategory, description, transaction_date: date, is_haram: haram.isHaram, haram_reason: haram.reason ?? null });
+      addTransaction({
+        type, amount: Number(amount),
+        cash_amount: cashAmount !== "" ? cashNum : undefined,
+        credit_amount: cashAmount !== "" ? creditNum : undefined,
+        category: finalCategory, description, transaction_date: date, is_haram: haram.isHaram, haram_reason: haram.reason ?? null,
+      });
       if (haram.isHaram) toast.warning(`Flagged: ${haram.reason}`);
       else toast.success("Transaction added");
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["transactions"] }); setAmount(""); setDescription(""); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["transactions"] }); setAmount(""); setCashAmount(""); setDescription(""); },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
@@ -335,7 +350,12 @@ function TransactionsPanel() {
     mutationFn: () => {
       if (!editTxn) return;
       const haram = detectHaram(`${editCategory} ${editDescription}`);
-      updateTransaction(editTxn.id, { type: editType, amount: Number(editAmount), category: editCategory, description: editDescription, transaction_date: editDate, is_haram: haram.isHaram, haram_reason: haram.reason ?? null });
+      updateTransaction(editTxn.id, {
+        type: editType, amount: Number(editAmount),
+        cash_amount: editCashAmount !== "" ? editCashNum : undefined,
+        credit_amount: editCashAmount !== "" ? editCreditNum : undefined,
+        category: editCategory, description: editDescription, transaction_date: editDate, is_haram: haram.isHaram, haram_reason: haram.reason ?? null,
+      });
       if (haram.isHaram) toast.warning(`Updated & flagged: ${haram.reason}`);
       else toast.success("Transaction updated");
     },
@@ -350,6 +370,7 @@ function TransactionsPanel() {
 
   function openEdit(t: Transaction) {
     setEditTxn(t); setEditType(t.type); setEditAmount(String(t.amount));
+    setEditCashAmount(t.cash_amount != null ? String(t.cash_amount) : "");
     setEditCategory(t.category); setEditDescription(t.description ?? ""); setEditDate(t.transaction_date);
   }
 
@@ -375,8 +396,33 @@ function TransactionsPanel() {
               </Select>
             </div>
             <div className="md:col-span-1">
-              <Label>Amount</Label>
+              <Label>Total Amount</Label>
               <Input className="mt-1" type="number" step="0.01" min="0" required value={amount} onChange={(e) => setAmount(e.target.value)} />
+            </div>
+            <div className="md:col-span-1">
+              <Label>Cash Amount</Label>
+              <Input
+                className="mt-1"
+                type="number"
+                step="0.01"
+                min="0"
+                max={totalNum || undefined}
+                placeholder="0.00"
+                value={cashAmount}
+                onChange={(e) => setCashAmount(e.target.value)}
+              />
+            </div>
+            <div className="md:col-span-1">
+              <Label>Credit Amount <span className="text-xs text-muted-foreground">(auto)</span></Label>
+              <Input
+                className="mt-1 opacity-70 cursor-not-allowed"
+                type="number"
+                step="0.01"
+                readOnly
+                tabIndex={-1}
+                value={cashAmount !== "" ? creditNum.toFixed(2) : ""}
+                placeholder="= Total − Cash"
+              />
             </div>
             <div className="md:col-span-2">
               <Label>Description</Label>
@@ -424,7 +470,16 @@ function TransactionsPanel() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={t.type === "income" ? "text-emerald-500" : "text-rose-500"}>{t.type === "income" ? "+" : "-"}${t.amount.toFixed(2)}</span>
+                    <div className="text-right">
+                      <div className={t.type === "income" ? "text-emerald-500 font-medium" : "text-rose-500 font-medium"}>
+                        {t.type === "income" ? "+" : "-"}${t.amount.toFixed(2)}
+                      </div>
+                      {t.cash_amount != null && (
+                        <div className="text-xs text-muted-foreground">
+                          Cash ${t.cash_amount.toFixed(2)} | Credit ${(t.credit_amount ?? 0).toFixed(2)}
+                        </div>
+                      )}
+                    </div>
                     <button onClick={() => openEdit(t)} className="text-muted-foreground hover:text-foreground" title="Edit"><Pencil className="h-4 w-4" /></button>
                     <button onClick={() => del.mutate(t.id)} className="text-muted-foreground hover:text-destructive" title="Delete"><Trash2 className="h-4 w-4" /></button>
                   </div>
@@ -450,8 +505,33 @@ function TransactionsPanel() {
               </Select>
             </div>
             <div>
-              <Label>Amount</Label>
+              <Label>Total Amount</Label>
               <Input className="mt-1" type="number" step="0.01" min="0" required value={editAmount} onChange={(e) => setEditAmount(e.target.value)} />
+            </div>
+            <div>
+              <Label>Cash Amount</Label>
+              <Input
+                className="mt-1"
+                type="number"
+                step="0.01"
+                min="0"
+                max={editTotalNum || undefined}
+                placeholder="0.00"
+                value={editCashAmount}
+                onChange={(e) => setEditCashAmount(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Credit Amount <span className="text-xs text-muted-foreground">(auto)</span></Label>
+              <Input
+                className="mt-1 opacity-70 cursor-not-allowed"
+                type="number"
+                step="0.01"
+                readOnly
+                tabIndex={-1}
+                value={editCashAmount !== "" ? editCreditNum.toFixed(2) : ""}
+                placeholder="= Total − Cash"
+              />
             </div>
             <div>
               <Label>Category</Label>
