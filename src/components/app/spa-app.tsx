@@ -1403,7 +1403,7 @@ function AiAssistantPage() {
 
     try {
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "AQ.Ab8RN6L16BnzGgpdAF6w8xzun4MhNAg_s6jS5ot-z6gTw81kwg";
-      const apiUrl = import.meta.env.VITE_AI_API_URL || "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=";
+      const apiUrl = import.meta.env.VITE_AI_API_URL || "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=";
 
       const SYSTEM = "You are Tactifin AI, a friendly personal-finance assistant. Help with budgeting, expense tracking, Zakat calculation (2.5% on wealth above nisab ~$5,200), Shariah-compliance questions (flag riba/interest, gambling, alcohol), tax estimation, and savings goals. Keep answers concise and practical.";
 
