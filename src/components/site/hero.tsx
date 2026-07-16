@@ -52,9 +52,12 @@ export function Hero() {
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <Button size="lg" className="rounded-full px-8 btn-glow-idle" asChild>
-              <a href="/app">
-                Try the workspace <ArrowRight className="ml-1.5 h-4 w-4" />
+              <a href="/auth">
+                Get started <ArrowRight className="ml-1.5 h-4 w-4" />
               </a>
+            </Button>
+            <Button size="lg" variant="ghost" className="rounded-full px-6" asChild>
+              <a href="/app">Continue as guest</a>
             </Button>
           </div>
         </div>

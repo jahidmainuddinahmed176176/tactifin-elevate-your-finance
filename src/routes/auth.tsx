@@ -204,6 +204,20 @@ function AuthPage() {
         <p className="mt-4 text-center text-xs text-muted-foreground">
           <Link to="/" className="hover:text-foreground">← Back to home</Link>
         </p>
+
+        {/* Guest access */}
+        <div className="mt-6 rounded-xl border border-border/60 bg-card/40 p-4 text-center">
+          <p className="text-sm text-muted-foreground">Just want to explore?</p>
+          <Link
+            to="/app"
+            className="mt-1 inline-block text-sm font-medium text-foreground hover:underline"
+          >
+            Continue as guest →
+          </Link>
+          <p className="mt-1 text-xs text-muted-foreground">
+            No account needed · data stays in your browser
+          </p>
+        </div>
       </div>
     </div>
   );

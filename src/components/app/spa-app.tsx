@@ -1591,11 +1591,19 @@ export function SpaApp() {
             ))}
           </div>
         </nav>
-        <div className="border-t border-border p-3 shrink-0">
+        <div className="border-t border-border p-3 shrink-0 space-y-0.5">
           <button onClick={toggle} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             {theme === "dark" ? "Light mode" : "Dark mode"}
           </button>
+          {/* Guest mode nudge */}
+          <a
+            href="/auth"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <Lock className="h-4 w-4 shrink-0" />
+            Sign in to save data
+          </a>
         </div>
       </aside>
 
