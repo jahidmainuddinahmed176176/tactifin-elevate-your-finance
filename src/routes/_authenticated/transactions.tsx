@@ -22,6 +22,7 @@ function TransactionsPage() {
   const qc = useQueryClient();
   const [type, setType] = useState<TxnType>("expense");
   const [amount, setAmount] = useState("");
+  const [cashAmount, setCashAmount] = useState("");
   const [category, setCategory] = useState<string>("Food");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -30,9 +31,18 @@ function TransactionsPage() {
   const [editTxn, setEditTxn] = useState<Transaction | null>(null);
   const [editType, setEditType] = useState<TxnType>("expense");
   const [editAmount, setEditAmount] = useState("");
+  const [editCashAmount, setEditCashAmount] = useState("");
   const [editCategory, setEditCategory] = useState("Food");
   const [editDescription, setEditDescription] = useState("");
   const [editDate, setEditDate] = useState("");
+
+  const totalNum = Number(amount) || 0;
+  const cashNum = Number(cashAmount) || 0;
+  const creditNum = totalNum > 0 ? Math.max(0, totalNum - cashNum) : 0;
+
+  const editTotalNum = Number(editAmount) || 0;
+  const editCashNum = Number(editCashAmount) || 0;
+  const editCreditNum = editTotalNum > 0 ? Math.max(0, editTotalNum - editCashNum) : 0;
 
   const { data: txns = [] } = useQuery({
     queryKey: ["transactions"],
@@ -43,13 +53,23 @@ function TransactionsPage() {
     mutationFn: () => {
       const finalCategory = autoCat && description.trim() ? autoCategorize(description) : category;
       const haram = detectHaram(`${finalCategory} ${description}`);
-      addTransaction({ type, amount: Number(amount), category: finalCategory, description, transaction_date: date, is_haram: haram.isHaram, haram_reason: haram.reason ?? null });
+      addTransaction({
+        type,
+        amount: totalNum,
+        cash_amount: cashNum || undefined,
+        credit_amount: cashAmount !== "" ? creditNum : undefined,
+        category: finalCategory,
+        description,
+        transaction_date: date,
+        is_haram: haram.isHaram,
+        haram_reason: haram.reason ?? null,
+      });
       if (haram.isHaram) toast.warning(`Flagged: ${haram.reason}`);
       else toast.success("Transaction added");
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["transactions"] });
-      setAmount(""); setDescription("");
+      setAmount(""); setDescription(""); setCashAmount("");
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
@@ -58,7 +78,17 @@ function TransactionsPage() {
     mutationFn: () => {
       if (!editTxn) return;
       const haram = detectHaram(`${editCategory} ${editDescription}`);
-      updateTransaction(editTxn.id, { type: editType, amount: Number(editAmount), category: editCategory, description: editDescription, transaction_date: editDate, is_haram: haram.isHaram, haram_reason: haram.reason ?? null });
+      updateTransaction(editTxn.id, {
+        type: editType,
+        amount: editTotalNum,
+        cash_amount: editCashNum || undefined,
+        credit_amount: editCashAmount !== "" ? editCreditNum : undefined,
+        category: editCategory,
+        description: editDescription,
+        transaction_date: editDate,
+        is_haram: haram.isHaram,
+        haram_reason: haram.reason ?? null,
+      });
       if (haram.isHaram) toast.warning(`Updated & flagged: ${haram.reason}`);
       else toast.success("Transaction updated");
     },
@@ -78,6 +108,7 @@ function TransactionsPage() {
     setEditTxn(t);
     setEditType(t.type);
     setEditAmount(String(t.amount));
+    setEditCashAmount(t.cash_amount != null ? String(t.cash_amount) : "");
     setEditCategory(t.category);
     setEditDescription(t.description ?? "");
     setEditDate(t.transaction_date);
@@ -105,7 +136,7 @@ function TransactionsPage() {
               </Select>
             </div>
             <div className="md:col-span-1">
-              <Label>Amount</Label>
+              <Label>Total Amount</Label>
               <Input className="mt-1" type="number" step="0.01" min="0" required value={amount} onChange={(e) => setAmount(e.target.value)} />
             </div>
             <div className="md:col-span-2">
@@ -128,7 +159,31 @@ function TransactionsPage() {
               <Label>Date</Label>
               <Input className="mt-1" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </div>
-            <div className="md:col-span-6 flex items-center gap-4">
+            <div className="md:col-span-2">
+              <Label>Cash Amount</Label>
+              <Input
+                className="mt-1"
+                type="number"
+                step="0.01"
+                min="0"
+                max={totalNum || undefined}
+                placeholder="0.00"
+                value={cashAmount}
+                onChange={(e) => setCashAmount(e.target.value)}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Label>Credit Amount <span className="text-xs text-muted-foreground">(total − cash)</span></Label>
+              <Input
+                className="mt-1 bg-muted text-muted-foreground cursor-not-allowed"
+                type="number"
+                step="0.01"
+                readOnly
+                value={cashAmount !== "" ? creditNum.toFixed(2) : ""}
+                placeholder="auto-calculated"
+              />
+            </div>
+            <div className="md:col-span-2 flex items-end gap-4 pb-0.5">
               <Button type="submit" disabled={add.isPending}>{add.isPending ? "Adding..." : "Add transaction"}</Button>
               <label className="flex items-center gap-2 text-sm text-muted-foreground">
                 <input type="checkbox" checked={autoCat} onChange={(e) => setAutoCat(e.target.checked)} className="rounded" />
@@ -152,6 +207,12 @@ function TransactionsPage() {
                     <div className="font-medium truncate">{t.description || t.category}</div>
                     <div className="text-xs text-muted-foreground">
                       {t.category} · {t.transaction_date}
+                      {t.cash_amount != null && (
+                        <span className="ml-2">
+                          Cash: ${t.cash_amount.toFixed(2)}
+                          {t.credit_amount != null && t.credit_amount > 0 && ` · Credit: $${t.credit_amount.toFixed(2)}`}
+                        </span>
+                      )}
                       {t.is_haram && <span className="ml-2 text-amber-500" title={t.haram_reason ?? ""}>⚠ {t.haram_reason}</span>}
                     </div>
                   </div>
@@ -188,8 +249,32 @@ function TransactionsPage() {
               </Select>
             </div>
             <div>
-              <Label>Amount</Label>
+              <Label>Total Amount</Label>
               <Input className="mt-1" type="number" step="0.01" min="0" required value={editAmount} onChange={(e) => setEditAmount(e.target.value)} />
+            </div>
+            <div>
+              <Label>Cash Amount</Label>
+              <Input
+                className="mt-1"
+                type="number"
+                step="0.01"
+                min="0"
+                max={editTotalNum || undefined}
+                placeholder="0.00"
+                value={editCashAmount}
+                onChange={(e) => setEditCashAmount(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Credit Amount <span className="text-xs text-muted-foreground">(total − cash)</span></Label>
+              <Input
+                className="mt-1 bg-muted text-muted-foreground cursor-not-allowed"
+                type="number"
+                step="0.01"
+                readOnly
+                value={editCashAmount !== "" ? editCreditNum.toFixed(2) : ""}
+                placeholder="auto-calculated"
+              />
             </div>
             <div>
               <Label>Category</Label>
