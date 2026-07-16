@@ -18,6 +18,16 @@ export const Route = createFileRoute("/_authenticated/transactions")({
   component: TransactionsPage,
 });
 
+function formatAmount(t: Transaction): string {
+  const sign = t.type === "income" ? "+" : "-";
+  const total = `${sign}$${t.amount.toFixed(2)}`;
+  if (t.cash_amount != null) {
+    const credit = t.credit_amount ?? 0;
+    return `${total} (Cash $${t.cash_amount.toFixed(2)} | Credit $${credit.toFixed(2)})`;
+  }
+  return total;
+}
+
 function TransactionsPage() {
   const qc = useQueryClient();
   const [type, setType] = useState<TxnType>("expense");
@@ -38,11 +48,11 @@ function TransactionsPage() {
 
   const totalNum = Number(amount) || 0;
   const cashNum = Number(cashAmount) || 0;
-  const creditNum = totalNum > 0 ? Math.max(0, totalNum - cashNum) : 0;
+  const creditNum = totalNum > 0 && cashAmount !== "" ? Math.max(0, totalNum - cashNum) : 0;
 
   const editTotalNum = Number(editAmount) || 0;
   const editCashNum = Number(editCashAmount) || 0;
-  const editCreditNum = editTotalNum > 0 ? Math.max(0, editTotalNum - editCashNum) : 0;
+  const editCreditNum = editTotalNum > 0 && editCashAmount !== "" ? Math.max(0, editTotalNum - editCashNum) : 0;
 
   const { data: txns = [] } = useQuery({
     queryKey: ["transactions"],
@@ -56,7 +66,7 @@ function TransactionsPage() {
       addTransaction({
         type,
         amount: totalNum,
-        cash_amount: cashNum || undefined,
+        cash_amount: cashAmount !== "" ? cashNum : undefined,
         credit_amount: cashAmount !== "" ? creditNum : undefined,
         category: finalCategory,
         description,
@@ -81,7 +91,7 @@ function TransactionsPage() {
       updateTransaction(editTxn.id, {
         type: editType,
         amount: editTotalNum,
-        cash_amount: editCashNum || undefined,
+        cash_amount: editCashAmount !== "" ? editCashNum : undefined,
         credit_amount: editCashAmount !== "" ? editCreditNum : undefined,
         category: editCategory,
         description: editDescription,
@@ -139,6 +149,31 @@ function TransactionsPage() {
               <Label>Total Amount</Label>
               <Input className="mt-1" type="number" step="0.01" min="0" required value={amount} onChange={(e) => setAmount(e.target.value)} />
             </div>
+            <div className="md:col-span-1">
+              <Label>Cash Amount</Label>
+              <Input
+                className="mt-1"
+                type="number"
+                step="0.01"
+                min="0"
+                max={totalNum || undefined}
+                placeholder="0.00"
+                value={cashAmount}
+                onChange={(e) => setCashAmount(e.target.value)}
+              />
+            </div>
+            <div className="md:col-span-1">
+              <Label>Credit Amount <span className="text-xs text-muted-foreground">(auto)</span></Label>
+              <Input
+                className="mt-1 opacity-70 cursor-not-allowed"
+                type="number"
+                step="0.01"
+                readOnly
+                tabIndex={-1}
+                value={cashAmount !== "" ? creditNum.toFixed(2) : ""}
+                placeholder="= Total − Cash"
+              />
+            </div>
             <div className="md:col-span-2">
               <Label>Description</Label>
               <Input className="mt-1" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. Grocery shopping" />
@@ -159,31 +194,7 @@ function TransactionsPage() {
               <Label>Date</Label>
               <Input className="mt-1" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </div>
-            <div className="md:col-span-2">
-              <Label>Cash Amount</Label>
-              <Input
-                className="mt-1"
-                type="number"
-                step="0.01"
-                min="0"
-                max={totalNum || undefined}
-                placeholder="0.00"
-                value={cashAmount}
-                onChange={(e) => setCashAmount(e.target.value)}
-              />
-            </div>
-            <div className="md:col-span-2">
-              <Label>Credit Amount <span className="text-xs text-muted-foreground">(total − cash)</span></Label>
-              <Input
-                className="mt-1 bg-muted text-muted-foreground cursor-not-allowed"
-                type="number"
-                step="0.01"
-                readOnly
-                value={cashAmount !== "" ? creditNum.toFixed(2) : ""}
-                placeholder="auto-calculated"
-              />
-            </div>
-            <div className="md:col-span-2 flex items-end gap-4 pb-0.5">
+            <div className="md:col-span-4 flex items-center gap-4 pt-1">
               <Button type="submit" disabled={add.isPending}>{add.isPending ? "Adding..." : "Add transaction"}</Button>
               <label className="flex items-center gap-2 text-sm text-muted-foreground">
                 <input type="checkbox" checked={autoCat} onChange={(e) => setAutoCat(e.target.checked)} className="rounded" />
@@ -207,19 +218,20 @@ function TransactionsPage() {
                     <div className="font-medium truncate">{t.description || t.category}</div>
                     <div className="text-xs text-muted-foreground">
                       {t.category} · {t.transaction_date}
-                      {t.cash_amount != null && (
-                        <span className="ml-2">
-                          Cash: ${t.cash_amount.toFixed(2)}
-                          {t.credit_amount != null && t.credit_amount > 0 && ` · Credit: $${t.credit_amount.toFixed(2)}`}
-                        </span>
-                      )}
                       {t.is_haram && <span className="ml-2 text-amber-500" title={t.haram_reason ?? ""}>⚠ {t.haram_reason}</span>}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={t.type === "income" ? "text-emerald-500" : "text-rose-500"}>
-                      {t.type === "income" ? "+" : "-"}${t.amount.toFixed(2)}
-                    </span>
+                    <div className="text-right">
+                      <div className={t.type === "income" ? "text-emerald-500 font-medium" : "text-rose-500 font-medium"}>
+                        {t.type === "income" ? "+" : "-"}${t.amount.toFixed(2)}
+                      </div>
+                      {t.cash_amount != null && (
+                        <div className="text-xs text-muted-foreground">
+                          Cash ${t.cash_amount.toFixed(2)} | Credit ${(t.credit_amount ?? 0).toFixed(2)}
+                        </div>
+                      )}
+                    </div>
                     <button onClick={() => openEdit(t)} className="text-muted-foreground hover:text-foreground" title="Edit">
                       <Pencil className="h-4 w-4" />
                     </button>
@@ -266,14 +278,15 @@ function TransactionsPage() {
               />
             </div>
             <div>
-              <Label>Credit Amount <span className="text-xs text-muted-foreground">(total − cash)</span></Label>
+              <Label>Credit Amount <span className="text-xs text-muted-foreground">(auto)</span></Label>
               <Input
-                className="mt-1 bg-muted text-muted-foreground cursor-not-allowed"
+                className="mt-1 opacity-70 cursor-not-allowed"
                 type="number"
                 step="0.01"
                 readOnly
+                tabIndex={-1}
                 value={editCashAmount !== "" ? editCreditNum.toFixed(2) : ""}
-                placeholder="auto-calculated"
+                placeholder="= Total − Cash"
               />
             </div>
             <div>
