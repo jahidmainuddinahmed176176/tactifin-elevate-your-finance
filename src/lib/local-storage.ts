@@ -23,8 +23,16 @@ function save<T>(key: string, data: T[]): void {
 export type TxnType = "income" | "expense";
 
 export interface Transaction {
-  id: string; type: TxnType; amount: number; category: string;
-  description: string; transaction_date: string; is_haram: boolean; haram_reason: string | null;
+  id: string;
+  type: TxnType;
+  amount: number;
+  cash_amount?: number;
+  credit_amount?: number;
+  category: string;
+  description: string;
+  transaction_date: string;
+  is_haram: boolean;
+  haram_reason: string | null;
 }
 
 export interface Budget { id: string; category: string; monthly_limit: number; }
