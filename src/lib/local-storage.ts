@@ -50,36 +50,40 @@ export interface Bill {
 export interface BSLineItem {
   id: string; label: string;
   section: "nca" | "ca" | "ncl" | "cl" | "equity";
-  amount: number; auto?: boolean;
+  amount: number;
+  auto?: boolean;
+  /** Which auto-calculation to use when auto=true */
+  autoType?: "cash" | "receivables" | "payables" | "net_income";
 }
 
 const DEFAULT_BS: BSLineItem[] = [
   // Non-current assets
-  { id: "nca-ppe", label: "Property, plant and equipment", section: "nca", amount: 0 },
-  { id: "nca-ip",  label: "Investment property", section: "nca", amount: 0 },
-  { id: "nca-ia",  label: "Intangible assets", section: "nca", amount: 0 },
-  { id: "nca-gw",  label: "Goodwill", section: "nca", amount: 0 },
-  { id: "nca-fa",  label: "Financial assets (other than equity-accounted investments, trade receivables and cash)", section: "nca", amount: 0 },
-  { id: "nca-em",  label: "Investments accounted for under the equity method", section: "nca", amount: 0 },
-  { id: "nca-ba",  label: "Biological assets", section: "nca", amount: 0 },
+  { id: "nca-ppe",  label: "Property, plant and equipment",                                                                      section: "nca",    amount: 0 },
+  { id: "nca-ip",   label: "Investment property",                                                                                 section: "nca",    amount: 0 },
+  { id: "nca-ia",   label: "Intangible assets",                                                                                   section: "nca",    amount: 0 },
+  { id: "nca-gw",   label: "Goodwill",                                                                                            section: "nca",    amount: 0 },
+  { id: "nca-fa",   label: "Financial assets (other than equity-accounted investments, trade receivables and cash)",              section: "nca",    amount: 0 },
+  { id: "nca-em",   label: "Investments accounted for under the equity method",                                                   section: "nca",    amount: 0 },
+  { id: "nca-ba",   label: "Biological assets",                                                                                   section: "nca",    amount: 0 },
   // Current assets
-  { id: "ca-inv",  label: "Inventories", section: "ca", amount: 0 },
-  { id: "ca-tr",   label: "Trade and other receivables", section: "ca", amount: 0 },
-  { id: "ca-cash", label: "Cash and cash equivalents", section: "ca", amount: 0, auto: true },
-  { id: "ca-hfs",  label: "Assets classified as held for sale", section: "ca", amount: 0 },
+  { id: "ca-inv",   label: "Inventories",                                                                                         section: "ca",     amount: 0 },
+  { id: "ca-tr",    label: "Trade and other receivables",                                                                         section: "ca",     amount: 0, auto: true, autoType: "receivables" },
+  { id: "ca-cash",  label: "Cash and cash equivalents",                                                                           section: "ca",     amount: 0, auto: true, autoType: "cash" },
+  { id: "ca-hfs",   label: "Assets classified as held for sale",                                                                  section: "ca",     amount: 0 },
   // Non-current liabilities
-  { id: "ncl-fl",  label: "Financial liabilities (other than trade and other payables and provisions)", section: "ncl", amount: 0 },
-  { id: "ncl-dta", label: "Deferred tax liabilities and assets", section: "ncl", amount: 0 },
-  { id: "ncl-prov",label: "Provisions (non-current)", section: "ncl", amount: 0 },
+  { id: "ncl-fl",   label: "Financial liabilities (other than trade and other payables and provisions)",                          section: "ncl",    amount: 0 },
+  { id: "ncl-dta",  label: "Deferred tax liabilities and assets",                                                                 section: "ncl",    amount: 0 },
+  { id: "ncl-prov", label: "Provisions (non-current)",                                                                            section: "ncl",    amount: 0 },
   // Current liabilities
-  { id: "cl-tp",   label: "Trade and other payables", section: "cl", amount: 0 },
-  { id: "cl-prov", label: "Provisions (current)", section: "cl", amount: 0 },
-  { id: "cl-tax",  label: "Liabilities and assets for current tax", section: "cl", amount: 0 },
-  { id: "cl-fl",   label: "Financial liabilities (current, other than trade payables and provisions)", section: "cl", amount: 0 },
-  { id: "cl-dg",   label: "Liabilities in disposal groups classified as held for sale", section: "cl", amount: 0 },
+  { id: "cl-tp",    label: "Trade and other payables",                                                                            section: "cl",     amount: 0, auto: true, autoType: "payables" },
+  { id: "cl-prov",  label: "Provisions (current)",                                                                                section: "cl",     amount: 0 },
+  { id: "cl-tax",   label: "Liabilities and assets for current tax",                                                              section: "cl",     amount: 0 },
+  { id: "cl-fl",    label: "Financial liabilities (current, other than trade payables and provisions)",                           section: "cl",     amount: 0 },
+  { id: "cl-dg",    label: "Liabilities in disposal groups classified as held for sale",                                          section: "cl",     amount: 0 },
   // Equity
-  { id: "eq-ic",   label: "Issued equity capital and reserves", section: "equity", amount: 0 },
-  { id: "eq-nci",  label: "Non-controlling interests", section: "equity", amount: 0 },
+  { id: "eq-ic",    label: "Issued equity capital and reserves",                                                                  section: "equity", amount: 0 },
+  { id: "eq-re",    label: "Retained earnings (net income from transactions)",                                                    section: "equity", amount: 0, auto: true, autoType: "net_income" },
+  { id: "eq-nci",   label: "Non-controlling interests",                                                                           section: "equity", amount: 0 },
 ];
 
 export function getTransactions(): Transaction[] {
@@ -146,7 +150,20 @@ export function deleteBill(id: string): void {
 export function getBSLineItems(): BSLineItem[] {
   const stored = load<BSLineItem>(KEYS.balance_sheet);
   if (stored.length === 0) { save(KEYS.balance_sheet, DEFAULT_BS); return DEFAULT_BS; }
-  return stored;
+
+  // Merge auto/autoType from DEFAULT_BS so upgrades reach existing users
+  const defaults = new Map(DEFAULT_BS.map(d => [d.id, d]));
+  const storedIds = new Set(stored.map(s => s.id));
+
+  // Patch existing items with updated auto metadata
+  const patched = stored.map(s => {
+    const d = defaults.get(s.id);
+    return d ? { ...s, auto: d.auto, autoType: d.autoType, label: d.label } : s;
+  });
+
+  // Append any brand-new line items that don't exist in stored data yet (e.g. eq-re)
+  const newItems = DEFAULT_BS.filter(d => !storedIds.has(d.id));
+  return [...patched, ...newItems];
 }
 export function updateBSLineItem(id: string, amount: number): void {
   const all = getBSLineItems();

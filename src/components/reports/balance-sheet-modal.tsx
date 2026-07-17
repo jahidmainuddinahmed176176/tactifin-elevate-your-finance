@@ -21,6 +21,13 @@ const SECTION_LABELS: Record<BSLineItem["section"], string> = {
   equity: "Equity",
 };
 
+const AUTO_BADGE: Record<NonNullable<BSLineItem["autoType"]>, { label: string; color: string }> = {
+  cash:       { label: "auto · cash",        color: "bg-blue-500/10 text-blue-600" },
+  receivables:{ label: "auto · receivables", color: "bg-emerald-500/10 text-emerald-600" },
+  payables:   { label: "auto · payables",    color: "bg-amber-500/10 text-amber-600" },
+  net_income: { label: "auto · net income",  color: "bg-purple-500/10 text-purple-600" },
+};
+
 function SectionHeader({ label }: { label: string }) {
   return (
     <tr className="bg-muted">
@@ -46,12 +53,38 @@ export function BalanceSheetModal({ open, onClose }: Props) {
   const { data: items = [] } = useQuery({ queryKey: ["bs_line_items"], queryFn: getBSLineItems });
   const [editing, setEditing] = useState<Record<string, string>>({});
 
-  const cashFromTxns = useMemo(() =>
+  // Auto-calculated values from transactions
+  const autoCash = useMemo(() =>
+    txns.reduce((s, t) => {
+      const cash = t.cash_amount ?? t.amount;
+      return s + (t.type === "income" ? cash : -cash);
+    }, 0),
+    [txns]);
+
+  const autoReceivables = useMemo(() =>
+    txns.filter(t => t.type === "income").reduce((s, t) => s + (t.credit_amount ?? 0), 0),
+    [txns]);
+
+  const autoPayables = useMemo(() =>
+    txns.filter(t => t.type === "expense").reduce((s, t) => s + (t.credit_amount ?? 0), 0),
+    [txns]);
+
+  const autoNetIncome = useMemo(() =>
     txns.reduce((s, t) => s + (t.type === "income" ? t.amount : -t.amount), 0),
     [txns]);
 
+  function autoVal(autoType: BSLineItem["autoType"]): number {
+    switch (autoType) {
+      case "cash":        return autoCash;
+      case "receivables": return autoReceivables;
+      case "payables":    return autoPayables;
+      case "net_income":  return autoNetIncome;
+      default:            return autoCash; // legacy fallback
+    }
+  }
+
   function val(item: BSLineItem): number {
-    if (item.auto) return cashFromTxns;
+    if (item.auto) return autoVal(item.autoType);
     return item.amount;
   }
 
@@ -69,7 +102,7 @@ export function BalanceSheetModal({ open, onClose }: Props) {
   }
 
   function handleReset() {
-    if (!confirm("Reset all values to zero?")) return;
+    if (!confirm("Reset all manually-entered values to zero?")) return;
     resetBSLineItems();
     qc.invalidateQueries({ queryKey: ["bs_line_items"] });
   }
@@ -90,15 +123,24 @@ export function BalanceSheetModal({ open, onClose }: Props) {
 
   function LineRow({ item }: { item: BSLineItem }) {
     const current = editing[item.id] ?? String(val(item) === 0 ? "" : val(item));
+    const badge = item.auto ? (AUTO_BADGE[item.autoType ?? "cash"] ?? AUTO_BADGE.cash) : null;
+    const v = val(item);
+
     return (
       <tr className="hover:bg-muted/10 group">
         <td className="px-3 py-1 pl-8 text-sm text-muted-foreground group-hover:text-foreground transition-colors">
           {item.label}
-          {item.auto && <span className="ml-1 text-[10px] bg-blue-500/10 text-blue-600 px-1 rounded">auto</span>}
+          {badge && (
+            <span className={`ml-1.5 text-[10px] px-1.5 py-0.5 rounded font-medium ${badge.color}`}>
+              {badge.label}
+            </span>
+          )}
         </td>
         <td className="px-2 py-1 text-right w-36">
           {item.auto ? (
-            <span className="tabular-nums text-sm font-medium text-blue-600">{fmt(cashFromTxns)}</span>
+            <span className={`tabular-nums text-sm font-medium ${v < 0 ? "text-rose-500" : ""}`}>
+              {v < 0 ? `(${fmt(-v)})` : fmt(v)}
+            </span>
           ) : (
             <Input
               type="number"
@@ -129,9 +171,16 @@ export function BalanceSheetModal({ open, onClose }: Props) {
               <RotateCcw className="h-3 w-3 mr-1" /> Reset
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground bg-blue-500/10 border border-blue-500/20 rounded px-2 py-1">
-            Click any value to edit. "Cash and cash equivalents" is auto-calculated from your transactions.
-          </p>
+          <div className="text-xs text-muted-foreground bg-blue-500/10 border border-blue-500/20 rounded px-2 py-1.5 space-y-0.5">
+            <p>Click any unlabelled value to edit manually.</p>
+            <p>
+              <span className="bg-blue-500/10 text-blue-600 px-1 rounded">auto · cash</span>{" "}
+              <span className="bg-emerald-500/10 text-emerald-600 px-1 rounded">auto · receivables</span>{" "}
+              <span className="bg-amber-500/10 text-amber-600 px-1 rounded">auto · payables</span>{" "}
+              <span className="bg-purple-500/10 text-purple-600 px-1 rounded">auto · net income</span>{" "}
+              fields are calculated from your transactions.
+            </p>
+          </div>
         </DialogHeader>
 
         <div className="overflow-auto flex-1 border rounded-lg">
@@ -139,7 +188,7 @@ export function BalanceSheetModal({ open, onClose }: Props) {
             <thead className="sticky top-0 bg-background z-10 border-b">
               <tr>
                 <th className="px-3 py-2 text-left font-semibold text-sm">ASSETS</th>
-                <th className="px-3 py-2 text-right font-semibold text-sm w-36">$'000</th>
+                <th className="px-3 py-2 text-right font-semibold text-sm w-36">$</th>
               </tr>
             </thead>
             <tbody>
@@ -177,7 +226,7 @@ export function BalanceSheetModal({ open, onClose }: Props) {
                 <td colSpan={2} className="px-3 py-2 text-xs text-center">
                   {balanced
                     ? <span className="text-emerald-600 font-medium">✓ Balance sheet balances — Assets = Equity + Liabilities</span>
-                    : <span className="text-rose-500 font-medium">⚠ Difference of ${fmt(Math.abs(totalAssets - totalLiabEquity))} — please check values</span>}
+                    : <span className="text-rose-500 font-medium">⚠ Difference of ${fmt(Math.abs(totalAssets - totalLiabEquity))} — enter manual values above to reconcile</span>}
                 </td>
               </tr>
             </tbody>
