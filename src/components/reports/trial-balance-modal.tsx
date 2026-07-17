@@ -11,21 +11,39 @@ function fmt(n: number) {
 export function TrialBalanceModal({ open, onClose }: Props) {
   const { data: txns = [] } = useQuery({ queryKey: ["transactions"], queryFn: getTransactions });
 
-  // Build account balances (double-entry)
-  const accounts: Record<string, { debit: number; credit: number; type: "asset" | "revenue" | "expense" }> = {};
+  // Build account balances using proper double-entry with cash/credit split
+  const accounts: Record<string, { debit: number; credit: number; type: "asset" | "liability" | "revenue" | "expense" }> = {};
 
-  function addEntry(acct: string, side: "debit" | "credit", amount: number, type: "asset" | "revenue" | "expense") {
+  function addEntry(
+    acct: string,
+    side: "debit" | "credit",
+    amount: number,
+    type: "asset" | "liability" | "revenue" | "expense",
+  ) {
+    if (amount === 0) return;
     if (!accounts[acct]) accounts[acct] = { debit: 0, credit: 0, type };
     accounts[acct][side] += amount;
   }
 
   for (const t of txns) {
+    const cash   = t.cash_amount   ?? t.amount;
+    const credit = t.credit_amount ?? 0;
+    const total  = t.amount;
+
     if (t.type === "income") {
-      addEntry("Cash and cash equivalents", "debit",  t.amount, "asset");
-      addEntry(t.category,                  "credit", t.amount, "revenue");
+      // Dr Cash (cash received)
+      addEntry("Cash and cash equivalents", "debit",  cash,   "asset");
+      // Dr Trade receivables (sold on credit)
+      addEntry("Trade receivables",          "debit",  credit, "asset");
+      // Cr Revenue category
+      addEntry(t.category,                  "credit", total,  "revenue");
     } else {
-      addEntry(t.category,                  "debit",  t.amount, "expense");
-      addEntry("Cash and cash equivalents", "credit", t.amount, "asset");
+      // Dr Expense category
+      addEntry(t.category,                  "debit",  total,  "expense");
+      // Cr Cash (paid in cash)
+      addEntry("Cash and cash equivalents", "credit", cash,   "asset");
+      // Cr Trade payables (bought on credit)
+      addEntry("Trade payables",            "credit", credit, "liability");
     }
   }
 
@@ -34,7 +52,7 @@ export function TrialBalanceModal({ open, onClose }: Props) {
     const netCredit = v.credit > v.debit  ? v.credit - v.debit  : 0;
     return { name, type: v.type, netDebit, netCredit };
   }).sort((a, b) => {
-    const order = { asset: 0, expense: 1, revenue: 2 };
+    const order = { asset: 0, liability: 1, expense: 2, revenue: 3 };
     return (order[a.type] - order[b.type]) || a.name.localeCompare(b.name);
   });
 
@@ -42,6 +60,13 @@ export function TrialBalanceModal({ open, onClose }: Props) {
   const totalCredit = rows.reduce((s, r) => s + r.netCredit, 0);
   const balanced = Math.abs(totalDebit - totalCredit) < 0.01;
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+
+  const typeColor: Record<string, string> = {
+    revenue:   "bg-emerald-500/10 text-emerald-600",
+    expense:   "bg-rose-500/10 text-rose-600",
+    asset:     "bg-blue-500/10 text-blue-600",
+    liability: "bg-amber-500/10 text-amber-600",
+  };
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
@@ -56,7 +81,7 @@ export function TrialBalanceModal({ open, onClose }: Props) {
             <thead className="sticky top-0 bg-muted text-muted-foreground">
               <tr>
                 <th className="px-4 py-2 text-left font-medium">Account</th>
-                <th className="px-4 py-2 text-center font-medium w-16 text-xs">Type</th>
+                <th className="px-4 py-2 text-center font-medium w-20 text-xs">Type</th>
                 <th className="px-4 py-2 text-right font-medium w-32">Debit ($)</th>
                 <th className="px-4 py-2 text-right font-medium w-32">Credit ($)</th>
               </tr>
@@ -68,11 +93,9 @@ export function TrialBalanceModal({ open, onClose }: Props) {
                 <tr key={r.name} className={i % 2 === 0 ? "bg-background" : "bg-muted/20"}>
                   <td className="px-4 py-2">{r.name}</td>
                   <td className="px-4 py-2 text-center">
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide ${
-                      r.type === "revenue" ? "bg-emerald-500/10 text-emerald-600" :
-                      r.type === "expense" ? "bg-rose-500/10 text-rose-600" :
-                      "bg-blue-500/10 text-blue-600"
-                    }`}>{r.type}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide ${typeColor[r.type] ?? ""}`}>
+                      {r.type}
+                    </span>
                   </td>
                   <td className="px-4 py-2 text-right tabular-nums">{fmt(r.netDebit)}</td>
                   <td className="px-4 py-2 text-right tabular-nums">{fmt(r.netCredit)}</td>
