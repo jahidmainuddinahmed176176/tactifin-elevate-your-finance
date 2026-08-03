@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getTransactions } from "@/lib/local-storage";
 import { useState, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { computeTaxBD } from "@/lib/tax/bd";
 
 interface Props { open: boolean; onClose: () => void; }
 
@@ -45,7 +46,35 @@ export function IncomeStatementModal({ open, onClose }: Props) {
   const totalRevenue = sortedRevenues.reduce((s, [, v]) => s + v, 0);
   const totalExpenses = sortedExpenses.reduce((s, [, v]) => s + v, 0);
   const grossProfit = totalRevenue - totalExpenses;
-  const tax = grossProfit > 0 ? grossProfit * 0 : 0; // tax computation placeholder
+
+  // BD tax toggle (off by default)
+  const [applyBDTax, setApplyBDTax] = useState(false);
+  const [bdInputs, setBdInputs] = useState({
+    employmentIncome: Math.max(0, grossProfit),
+    eligibleInvestments: 0,
+    disabledChildren: 0,
+    vehicles: {},
+    netWealth: 0,
+    minTaxFloor: 5000,
+  });
+
+  function setBdField<K extends keyof typeof bdInputs>(k: K, v: any) {
+    setBdInputs((s) => ({ ...s, [k]: v }));
+  }
+
+  const bdBreakdown = applyBDTax ? computeTaxBD({
+    ay: "AY 2026-27",
+    category: "General",
+    resident: true,
+    employmentIncome: bdInputs.employmentIncome,
+    eligibleInvestments: bdInputs.eligibleInvestments,
+    disabledChildren: bdInputs.disabledChildren,
+    vehicles: bdInputs.vehicles,
+    netWealth: bdInputs.netWealth,
+    minTaxFloor: bdInputs.minTaxFloor,
+  }) : null;
+
+  const tax = bdBreakdown ? bdBreakdown.totalTaxLiability : 0;
   const netIncome = grossProfit - tax;
 
   const periodLabel =
@@ -69,6 +98,22 @@ export function IncomeStatementModal({ open, onClose }: Props) {
               <SelectItem value="all">All time</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="p-3 flex gap-3 items-center">
+          <label className="flex items-center gap-2"><input type="checkbox" checked={applyBDTax} onChange={(e) => setApplyBDTax(e.target.checked)} /> Apply Bangladesh tax to profit</label>
+          {applyBDTax && (
+            <div className="flex gap-3">
+              <div>
+                <Label>Eligible investments</Label>
+                <Input type="number" className="w-36 mt-1" value={bdInputs.eligibleInvestments} onChange={(e) => setBdField("eligibleInvestments", Number(e.target.value))} />
+              </div>
+              <div>
+                <Label>Disabled children</Label>
+                <Input type="number" className="w-32 mt-1" value={bdInputs.disabledChildren} onChange={(e) => setBdField("disabledChildren", Number(e.target.value))} />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="overflow-auto flex-1 border rounded-lg">
@@ -97,6 +142,18 @@ export function IncomeStatementModal({ open, onClose }: Props) {
                 <td colSpan={2} className="px-3 py-2 font-semibold text-sm uppercase tracking-wide text-muted-foreground">Result</td>
               </tr>
               <Row label="Gross profit / (loss)" amount={grossProfit} bold indent />
+
+              {bdBreakdown && (
+                <>
+                  <tr className="bg-muted"><td colSpan={2} className="px-3 py-2 font-semibold text-sm uppercase tracking-wide text-muted-foreground">Bangladesh tax (summary)</td></tr>
+                  <Row label="Slab-taxable income" amount={bdBreakdown.slabTaxable} indent />
+                  <Row label="Slab tax" amount={bdBreakdown.slabTax} indent />
+                  <Row label="Investment credit" amount={-bdBreakdown.investmentCredit} indent />
+                  <Row label="Tax after credit" amount={bdBreakdown.taxAfterCredit} indent />
+                  <Row label="Total tax liability" amount={bdBreakdown.totalTaxLiability} indent bold />
+                </>
+              )}
+
               <tr className="border-t-2 border-border">
                 <td className="pl-3 pr-3 py-2 font-bold text-base">
                   {netIncome >= 0 ? "Net income for the period" : "Net loss for the period"}
