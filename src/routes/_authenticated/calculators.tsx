@@ -1,3 +1,4 @@
+import { computeTaxBD, BDInputs, BDBreakdown } from "@/lib/tax/bd";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +19,7 @@ function CalcPage() {
         <h1 className="text-3xl">Calculators</h1>
         <p className="text-sm text-muted-foreground">Zakat, personal tax, and credit health.</p>
       </div>
-      <Tabs defaultValue="zakat">
+      <Tabs defaultValue="tax">
         <TabsList>
           <TabsTrigger value="zakat">Zakat</TabsTrigger>
           <TabsTrigger value="tax">Personal tax</TabsTrigger>
@@ -63,34 +64,55 @@ function Zakat() {
 }
 
 function Tax() {
-  const [income, setIncome] = useState("50000");
-  const [deductions, setDeductions] = useState("12000");
-  const taxable = Math.max(0, Number(income) - Number(deductions));
-  // Simplified US progressive brackets (2024 single)
-  const brackets: [number, number][] = [
-    [11600, 0.10], [47150, 0.12], [100525, 0.22], [191950, 0.24], [243725, 0.32], [609350, 0.35], [Infinity, 0.37],
-  ];
-  let remaining = taxable, prev = 0, tax = 0;
-  for (const [cap, rate] of brackets) {
-    const slice = Math.min(remaining, cap - prev);
-    if (slice <= 0) break;
-    tax += slice * rate;
-    remaining -= slice;
-    prev = cap;
+  const [inputs, setInputs] = useState<BDInputs>({
+    ay: "AY 2026-27",
+    category: "General",
+    resident: true,
+    employmentIncome: 904397,
+    rent: 0,
+    agriculture: 0,
+    business: 0,
+    financial: 0,
+    dividend: 0,
+    other: 0,
+    capGainGold: 0,
+    capGainOtherGT5: 0,
+    capGainOtherLT5: 0,
+    eligibleInvestments: 200000,
+    disabledChildren: 0,
+    vehicles: {},
+    netWealth: 0,
+    minTaxFloor: 5000,
+  });
+
+  function setField<K extends keyof BDInputs>(k: K, v: BDInputs[K]) {
+    setInputs((s) => ({ ...s, [k]: v }));
   }
-  const effective = taxable > 0 ? (tax / taxable) * 100 : 0;
+
+  const breakdown = computeTaxBD(inputs);
+
   return (
     <Card className="mt-4">
-      <CardHeader><CardTitle>Personal income tax (estimate)</CardTitle></CardHeader>
+      <CardHeader><CardTitle>Personal income tax (Bangladesh)</CardTitle></CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-2">
-        <Field label="Annual gross income" v={income} set={setIncome} />
-        <Field label="Deductions" v={deductions} set={setDeductions} />
+        <div>
+          <Label>Assessment year</Label>
+          <Input className="mt-1" value={inputs.ay} onChange={(e) => setField("ay", e.target.value)} />
+        </div>
+        <div>
+          <Label>Taxpayer category</Label>
+          <Input className="mt-1" value={inputs.category} onChange={(e) => setField("category", e.target.value)} />
+        </div>
+        <Field label="Employment income" v={String(inputs.employmentIncome)} set={(v) => setField("employmentIncome", Number(v))} />
+        <Field label="Eligible investments/expenditures" v={String(inputs.eligibleInvestments)} set={(v) => setField("eligibleInvestments", Number(v))} />
         <div className="md:col-span-2 rounded-lg border border-border bg-card p-4">
-          <div className="text-xs text-muted-foreground">Taxable income</div>
-          <div className="text-2xl font-semibold">${taxable.toFixed(2)}</div>
-          <div className="mt-3 text-xs text-muted-foreground">Estimated tax</div>
-          <div className="text-3xl font-semibold text-rose-500">${tax.toFixed(2)}</div>
-          <div className="mt-1 text-xs text-muted-foreground">Effective rate: {effective.toFixed(1)}%</div>
+          <div className="text-xs text-muted-foreground">Taxable income (slab)</div>
+          <div className="text-2xl font-semibold">{breakdown.slabTaxable.toLocaleString()}</div>
+          <div className="mt-3 text-xs text-muted-foreground">Calculated slab tax</div>
+          <div className="text-3xl font-semibold text-rose-500">{breakdown.slabTax.toLocaleString()}</div>
+          <div className="mt-1 text-xs text-muted-foreground">Investment credit: {breakdown.investmentCredit.toLocaleString()}</div>
+          <div className="mt-1 text-xs text-muted-foreground">Tax after credit: {breakdown.taxAfterCredit.toLocaleString()}</div>
+          <div className="mt-1 text-xs text-muted-foreground">Total tax liability: {breakdown.totalTaxLiability.toLocaleString()}</div>
         </div>
       </CardContent>
     </Card>
