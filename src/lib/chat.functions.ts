@@ -8,52 +8,36 @@ Respond in the same language as the user.`;
 
 const MessageSchema = z.object({ role: z.enum(["user", "assistant"]), content: z.string() });
 
-async function callGemini(
+async function callDeepSeek(
   history: { role: string; content: string }[],
   content: string,
 ): Promise<string> {
-  const key =
-    process.env.GEMINI_API_KEY ??
-    process.env.GOOGLE_API_KEY ??
-    process.env.GOOGLE_GENERATIVE_AI_API_KEY ??
-    process.env.VITE_GEMINI_API_KEY;
+  const key = process.env.VITE_AI_API_KEY ?? process.env.AI_API_KEY;
+  if (!key) throw new Error("VITE_AI_API_KEY env var is missing");
 
-  if (!key) throw new Error("GEMINI_API_KEY env var is missing");
-
-  const contents = [
-    ...history.map((m) => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }],
-    })),
-    { role: "user", parts: [{ text: content }] },
+  const messages = [
+    { role: "system", content: SYSTEM },
+    ...history.map((m) => ({ role: m.role, content: m.content })),
+    { role: "user", content },
   ];
 
-  // x-goog-api-key header works with both AIza and AQ. key formats
-  const res = await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": key,
-      },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM }] },
-        contents,
-      }),
+  const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`,
     },
-  );
+    body: JSON.stringify({ model: "deepseek-chat", messages, max_tokens: 800, temperature: 0.7 }),
+  });
 
-  // Surface the full Gemini error so it's visible in the chat
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    const msg = (err as { error?: { message?: string } })?.error?.message ?? res.statusText;
-    throw new Error(`Gemini ${res.status}: ${msg}`);
+    const errText = await res.text().catch(() => "");
+    throw new Error(`DeepSeek ${res.status}: ${errText || res.statusText}`);
   }
 
-  const data = await res.json() as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error("Empty response from Gemini");
+  const data = await res.json();
+  const text = data?.choices?.[0]?.message?.content ?? data?.choices?.[0]?.text;
+  if (!text) throw new Error("Empty response from DeepSeek");
   return text;
 }
 
@@ -67,12 +51,11 @@ export const sendChatMessage = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     try {
-      const assistant = await callGemini(data.history, data.content);
+      const assistant = await callDeepSeek(data.history, data.content);
       return { assistant };
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       console.error("[Tactifin AI] error:", msg);
-      // Show the real error in the chat bubble so it's easy to diagnose
       return { assistant: `⚠️ ${msg}` };
     }
   });
