@@ -1,9 +1,9 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
-export function createGeminiProvider(apiKey: string) {
+export function createDeepSeekProvider(apiKey: string) {
   return createOpenAICompatible({
-    name: "google-gemini",
-    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
+    name: "deepseek",
+    baseURL: "https://api.deepseek.com/v1",
     apiKey,
   });
 }
