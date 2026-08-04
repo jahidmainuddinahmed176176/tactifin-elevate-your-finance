@@ -1,0 +1,4 @@
+Redeploy trigger: restoring spa-app
+
+This file was created to trigger a deployment after restoring src/components/app/spa-app.tsx.
+Timestamp: 2026-08-04T00:40:00Z
