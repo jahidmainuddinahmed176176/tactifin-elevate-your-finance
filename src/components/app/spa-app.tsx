@@ -31,6 +31,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, LineChart, Line,
 } from "recharts";
+import { Tax } from "@/routes/_authenticated/calculators";
 import {
   LayoutDashboard, Receipt, Target, Wallet, Calculator, ShieldCheck, Bot,
   Moon, Sun, Menu, X, CreditCard, RotateCcw, Newspaper, BookOpen,
@@ -822,29 +823,6 @@ function ZakatCalc() {
     </Card>
   );
 }
-function TaxCalc() {
-  const [income, setIncome] = useState("50000"); const [deductions, setDeductions] = useState("12000");
-  const taxable = Math.max(0, Number(income) - Number(deductions));
-  const brackets: [number, number][] = [[11600,0.10],[47150,0.12],[100525,0.22],[191950,0.24],[243725,0.32],[609350,0.35],[Infinity,0.37]];
-  let remaining = taxable, prev = 0, tax = 0;
-  for (const [cap, rate] of brackets) { const slice = Math.min(remaining, cap - prev); if (slice <= 0) break; tax += slice * rate; remaining -= slice; prev = cap; }
-  const effective = taxable > 0 ? (tax / taxable) * 100 : 0;
-  return (
-    <Card className="mt-4"><CardHeader><CardTitle>Personal income tax (estimate)</CardTitle></CardHeader>
-      <CardContent className="grid gap-4 md:grid-cols-2">
-        <CalcField label="Annual gross income" v={income} set={setIncome} />
-        <CalcField label="Deductions" v={deductions} set={setDeductions} />
-        <div className="md:col-span-2 rounded-lg border border-border bg-card p-4">
-          <div className="text-xs text-muted-foreground">Taxable income</div>
-          <div className="text-2xl font-semibold">${taxable.toFixed(2)}</div>
-          <div className="mt-3 text-xs text-muted-foreground">Estimated tax</div>
-          <div className="text-3xl font-semibold text-rose-500">${tax.toFixed(2)}</div>
-          <div className="mt-1 text-xs text-muted-foreground">Effective rate: {effective.toFixed(1)}%</div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 function CreditCalc() {
   const [payment, setPayment] = useState(95); const [utilization, setUtilization] = useState(20);
   const [age, setAge] = useState(6); const [mix, setMix] = useState(3); const [inquiries, setInquiries] = useState(1);
@@ -871,11 +849,11 @@ function CreditCalc() {
 function CalcPage() {
   return (
     <div className="space-y-6">
-      <div><h1 className="text-3xl">Calculators</h1><p className="text-sm text-muted-foreground">Zakat, personal tax, and credit health.</p></div>
-      <Tabs defaultValue="zakat">
-        <TabsList><TabsTrigger value="zakat">Zakat</TabsTrigger><TabsTrigger value="tax">Personal tax</TabsTrigger><TabsTrigger value="credit">Credit score</TabsTrigger></TabsList>
+      <div><h1 className="text-3xl">Calculators</h1><p className="text-sm text-muted-foreground">Bangladesh personal tax, Zakat, and credit health.</p></div>
+      <Tabs defaultValue="tax">
+        <TabsList><TabsTrigger value="tax">Bangladesh tax</TabsTrigger><TabsTrigger value="zakat">Zakat</TabsTrigger><TabsTrigger value="credit">Credit score</TabsTrigger></TabsList>
+        <TabsContent value="tax"><Tax /></TabsContent>
         <TabsContent value="zakat"><ZakatCalc /></TabsContent>
-        <TabsContent value="tax"><TaxCalc /></TabsContent>
         <TabsContent value="credit"><CreditCalc /></TabsContent>
       </Tabs>
     </div>
