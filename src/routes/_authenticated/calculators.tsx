@@ -40,7 +40,7 @@ const CATEGORIES: TaxpayerCategory[] = ["General", "Woman or Senior Citizen (65+
 function bd(v: string): number { return Number(v) || 0; }
 function fmtBDT(n: number): string { return "BDT " + n.toLocaleString("en-IN", { maximumFractionDigits: 0 }); }
 
-function Tax() {
+export function Tax() {
   const [assessmentYear, setAssessmentYear] = useState<AssessmentYear>("AY 2026-27 & 2027-28");
   const [category, setCategory] = useState<TaxpayerCategory>("General");
   const [isCitizen, setIsCitizen] = useState("yes");

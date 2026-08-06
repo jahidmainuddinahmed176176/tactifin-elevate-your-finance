@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TaxCalculatorRouteImport } from './routes/tax-calculator'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -31,6 +32,11 @@ import { Route as AuthenticatedBillsRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedChatThreadIdRouteImport } from './routes/_authenticated/chat.$threadId'
 
+const TaxCalculatorRoute = TaxCalculatorRouteImport.update({
+  id: '/tax-calculator',
+  path: '/tax-calculator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRoute
   '/auth': typeof AuthRouteWithChildren
+  '/tax-calculator': typeof TaxCalculatorRoute
   '/bills': typeof AuthenticatedBillsRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
   '/calculators': typeof AuthenticatedCalculatorsRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRoute
   '/auth': typeof AuthRouteWithChildren
+  '/tax-calculator': typeof TaxCalculatorRoute
   '/bills': typeof AuthenticatedBillsRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
   '/calculators': typeof AuthenticatedCalculatorsRoute
@@ -189,6 +197,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRoute
   '/auth': typeof AuthRouteWithChildren
+  '/tax-calculator': typeof TaxCalculatorRoute
   '/_authenticated/bills': typeof AuthenticatedBillsRoute
   '/_authenticated/budgets': typeof AuthenticatedBudgetsRoute
   '/_authenticated/calculators': typeof AuthenticatedCalculatorsRoute
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/auth'
+    | '/tax-calculator'
     | '/bills'
     | '/budgets'
     | '/calculators'
@@ -235,6 +245,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/auth'
+    | '/tax-calculator'
     | '/bills'
     | '/budgets'
     | '/calculators'
@@ -257,6 +268,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/auth'
+    | '/tax-calculator'
     | '/_authenticated/bills'
     | '/_authenticated/budgets'
     | '/_authenticated/calculators'
@@ -281,10 +293,18 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AppRoute: typeof AppRoute
   AuthRoute: typeof AuthRouteWithChildren
+  TaxCalculatorRoute: typeof TaxCalculatorRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tax-calculator': {
+      id: '/tax-calculator'
+      path: '/tax-calculator'
+      fullPath: '/tax-calculator'
+      preLoaderRoute: typeof TaxCalculatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -507,6 +527,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AppRoute: AppRoute,
   AuthRoute: AuthRouteWithChildren,
+  TaxCalculatorRoute: TaxCalculatorRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
