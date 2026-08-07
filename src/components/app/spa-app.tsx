@@ -32,7 +32,6 @@ import {
   PieChart, Pie, Cell, Legend, LineChart, Line,
 } from "recharts";
 import { Tax } from "@/routes/_authenticated/calculators";
-import { PublicChatInterface } from "@/components/site/public-chat-interface";
 import {
   LayoutDashboard, Receipt, Target, Wallet, Calculator, ShieldCheck, Bot,
   Moon, Sun, Menu, X, CreditCard, RotateCcw, Newspaper, BookOpen,
@@ -1258,18 +1257,15 @@ function LearnPage() {
   );
 }
 
-// ─── AI Assistant ────────────────────────────────────────────────────────────
+// ─── AI Assistant placeholder ─────────────────────────────────────────────────
 function AiAssistantPage() {
   return (
     <div className="space-y-6">
       <div><h1 className="text-3xl">AI Assistant</h1><p className="text-sm text-muted-foreground">Your personal finance AI — ask anything about your money.</p></div>
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          <div className="flex flex-col h-[calc(100vh-16rem)] min-h-[400px]">
-            <PublicChatInterface threadId="spa-chat" />
-          </div>
-        </CardContent>
-      </Card>
+      <Card><CardContent className="flex flex-col items-center gap-4 py-16 text-center">
+        <Bot className="h-12 w-12 text-[color:var(--brand-bolt)]" />
+        <div><p className="font-medium">AI Assistant coming soon</p><p className="text-sm text-muted-foreground mt-1">Smart financial insights powered by AI will be available here.</p></div>
+      </CardContent></Card>
     </div>
   );
 }
